@@ -5,8 +5,8 @@ import { toast } from "sonner";
 const DEBUG_API = true;
 
 // Create axios instance with baseURL
-const baseURL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-console.log("API Base URL:", baseURL);
+const baseURL = import.meta.env.VITE_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:4000" : "https://djchallenger.in");
+
 const api = axios.create({
   baseURL: baseURL,
   headers: {

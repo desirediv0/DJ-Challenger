@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { toast, Toaster } from "sonner";
 
-export default function VerifyOtpPage() {
+function VerifyOtpContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { verifyOtp, resendVerification } = useAuth();
@@ -133,5 +133,17 @@ export default function VerifyOtpPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function VerifyOtpPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <VerifyOtpContent />
+        </Suspense>
     );
 }

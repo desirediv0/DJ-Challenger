@@ -111,7 +111,7 @@ export default function WishlistPage() {
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-3">Your Wishlist is Empty</h2>
                         <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                            Looks like you haven't saved any items yet. Browse our collection and heart your favorites!
+                            Looks like you haven&apos;t saved any items yet. Browse our collection and heart your favorites!
                         </p>
                         <Link href="/products">
                             <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-6 rounded-xl shadow-lg hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 text-lg">

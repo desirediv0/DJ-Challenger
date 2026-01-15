@@ -67,7 +67,7 @@ export default function CategoryPage() {
 
                 setCategory(response.data.category);
                 setProducts(response.data.products || []);
-                setPagination(response.data.pagination || pagination);
+                setPagination(prev => response.data.pagination || prev);
             } catch (err) {
                 console.error("Error fetching category:", err);
                 setError(err.message);

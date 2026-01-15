@@ -37,8 +37,7 @@ export const addToGuestCart = async (productVariantId, quantity = 1) => {
     try {
         // Fetch product variant details from backend
         const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"
-            }/public/products/variants/${productVariantId}`,
+            `${process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "https://djchallenger.in/api")}/public/products/variants/${productVariantId}`,
             {
                 credentials: "include",
             }
@@ -194,8 +193,7 @@ export const mergeGuestCartWithUserCart = async () => {
                 const quantity = Math.max(1, parseInt(guestItem.quantity) || 1);
 
                 const addResponse = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"
-                    }/cart/add`,
+                    `${process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "https://djchallenger.in/api")}/cart/add`,
                     {
                         method: "POST",
                         headers: {

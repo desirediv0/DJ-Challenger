@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { User, Package, MapPin, LogOut, Plus, Truck, CheckCircle2 } from "lucide-react";
@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { formatPrice } from "@/lib/products";
 
-// ... mock data ...
-
-export default function ProfilePage() {
+function ProfileContent() {
     const { user, isAuthenticated, logout } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -257,5 +255,17 @@ export default function ProfilePage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <Suspense fallback={
+            <div className="pt-20 min-h-screen bg-muted/30 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <ProfileContent />
+        </Suspense>
     );
 }

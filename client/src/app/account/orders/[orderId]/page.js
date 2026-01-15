@@ -136,7 +136,7 @@ export default function OrderDetailPage() {
             <div className="bg-gray-50 border border-gray-200 px-6 py-8 rounded-lg text-center">
                 <DynamicIcon name="Package" className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                 <h2 className="text-xl font-semibold mb-2">Order Not Found</h2>
-                <p className="text-gray-600 mb-4">The order you're looking for doesn't exist or has been removed.</p>
+                <p className="text-gray-600 mb-4">The order you&apos;re looking for doesn&apos;t exist or has been removed.</p>
                 <Button variant="outline" onClick={() => router.push("/account/orders")}>
                     <DynamicIcon name="ArrowLeft" className="mr-2 h-4 w-4" /> Back to Orders
                 </Button>
