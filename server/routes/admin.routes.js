@@ -1,7 +1,6 @@
 import express from "express";
 import {
   registerAdmin,
-  createSuperAdminSeed,
   loginAdmin,
   getAdminProfile,
   updateAdminProfile,
@@ -37,9 +36,6 @@ const router = express.Router();
 
 // Admin Auth Routes
 router.post("/login", loginAdmin);
-
-// Super Admin Seed Route (Public)
-router.get("/create-super-admin-seed", createSuperAdminSeed);
 
 // Register admin - require authentication and Super Admin role
 router.post("/register", verifyAdminJWT, hasRole("SUPER_ADMIN"), registerAdmin);
