@@ -87,7 +87,7 @@ export default function WarrantyPage() {
                             To claim warranty service:
                         </p>
                         <ol className="space-y-3 mb-8 list-decimal list-inside">
-                            <li><strong>Contact Support:</strong> Email us at DjChallengerIndia@gmail.com or call +91 92502 14749</li>
+                            <li><strong>Contact Support:</strong> Email us at DjChallengerIndia@gmail.com </li>
                             <li><strong>Provide Details:</strong> Share your order number, purchase invoice, and description of the issue</li>
                             <li><strong>Send Photos/Videos:</strong> Share clear photos or videos showing the defect</li>
                             <li><strong>Get Authorization:</strong> Our team will provide a warranty claim authorization code</li>
@@ -125,7 +125,6 @@ export default function WarrantyPage() {
                         </p>
                         <ul className="space-y-2">
                             <li>Email: <strong>DjChallengerIndia@gmail.com</strong></li>
-                            <li>Phone: <strong>+91 92502 14749</strong></li>
                             <li>Available: Monday - Saturday, 9 AM - 7 PM</li>
                         </ul>
                     </div>

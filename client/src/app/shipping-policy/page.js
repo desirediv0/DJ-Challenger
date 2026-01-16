@@ -97,8 +97,7 @@ export default function ShippingPolicyPage() {
                         <h2 className="font-display text-2xl font-bold mb-4">International Shipping</h2>
                         <p className="mb-8">
                             We ship to select international locations. Shipping charges and delivery times vary by country.
-                            Please contact our support team at <strong>DjChallengerIndia@gmail.com</strong> or call
-                            <strong> +91 92502 14749</strong> for international shipping quotes.
+                            Please contact our support team at <strong>DjChallengerIndia@gmail.com</strong>
                         </p>
                     </div>
                 </div>

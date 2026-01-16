@@ -117,7 +117,7 @@ export default function ReturnPolicyPage() {
                         </p>
                         <ul className="space-y-2">
                             <li>Email: <strong>DjChallengerIndia@gmail.com</strong></li>
-                            <li>Phone: <strong>+91 92502 14749</strong></li>
+
                             <li>Available: Monday - Saturday, 9 AM - 7 PM</li>
                         </ul>
                     </div>

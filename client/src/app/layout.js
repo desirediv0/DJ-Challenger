@@ -1,7 +1,6 @@
 import "./globals.css";
 import { Navbar } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { FloatingWhatsApp } from "@/components/ui/FloatingWhatsApp";
 import { CartProvider } from "@/lib/cart-context";
 import { AuthProvider } from "@/lib/auth-context";
 
@@ -30,7 +29,7 @@ export default function RootLayout({ children }) {
               {children}
             </main>
             <Footer />
-            <FloatingWhatsApp />
+
           </CartProvider>
         </AuthProvider>
       </body>

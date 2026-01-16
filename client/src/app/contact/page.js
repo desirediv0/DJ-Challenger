@@ -67,17 +67,7 @@ export default function ContactPage() {
 
             {/* Contact Cards */}
             <section className="max-w-7xl mx-auto px-4 -mt-4 pb-12">
-                <div className="grid md:grid-cols-3 gap-6">
-                    {/* Call */}
-                    <a href="tel:+919250214749" className="group bg-white rounded-2xl p-6 border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-center">
-                        <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
-                            <Phone className="h-6 w-6 text-primary" />
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">Call Us</h3>
-                        <p className="text-primary font-semibold mb-1">+91 92502 14749</p>
-                        <p className="text-gray-500 text-sm">Mon-Sat, 9 AM - 7 PM</p>
-                    </a>
-
+                <div className="grid md:grid-cols-2 gap-6">
                     {/* Email */}
                     <a href="mailto:DjChallengerIndia@gmail.com" className="group bg-white rounded-2xl p-6 border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-center">
                         <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">

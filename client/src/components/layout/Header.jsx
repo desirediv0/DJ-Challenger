@@ -145,12 +145,7 @@ export function Navbar() {
         <div className="bg-gradient-to-r from-primary to-orange-500 text-white">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-9 text-xs md:text-sm">
-              <div className="hidden md:flex items-center gap-4">
-                <a href="tel:+919250214749" className="flex items-center gap-1.5 hover:text-white/80 transition-colors">
-                  <Phone className="h-3.5 w-3.5" />
-                  +91 92502 14749
-                </a>
-              </div>
+             
               <div className="flex items-center gap-3 mx-auto md:mx-0">
                 <div className="flex items-center gap-1.5 font-medium">
                   <Sparkles className="h-4 w-4" />
@@ -488,13 +483,7 @@ export function Navbar() {
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="p-4 border-t border-gray-100 bg-gray-50">
-              <a href="tel:+919250214749" className="flex items-center gap-2 text-sm text-gray-600">
-                <Phone className="h-4 w-4 text-primary" />
-                +91 92502 14749
-              </a>
-            </div>
+           
           </div>
         </div>
       )}

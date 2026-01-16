@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Phone, MapPin, Facebook, Instagram, Youtube } from "lucide-react";
+import { Mail,  MapPin, Facebook, Instagram, Youtube } from "lucide-react";
 
 const shopLinks = [
   { name: "All Products", href: "/products" },
@@ -129,12 +129,6 @@ export const Footer = () => {
               Contact
             </h3>
             <ul className="space-y-4">
-              <li className="flex items-start gap-3">
-                <Phone className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <a href="tel:+919250214749" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  +91 92502 14749
-                </a>
-              </li>
               <li className="flex items-start gap-3">
                 <Mail className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                 <a href="mailto:DjChallengerIndia@gmail.com" className="text-gray-400 hover:text-white text-sm transition-colors break-all">

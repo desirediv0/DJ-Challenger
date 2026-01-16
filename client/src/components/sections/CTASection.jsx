@@ -31,12 +31,7 @@ export const CTASection = () => {
                 Shop All Products
               </Button>
             </Link>
-            <a href="tel:+919250214749">
-              <Button variant="heroOutline" size="xl" className="gap-2 w-full sm:w-auto text-white border-white/30 hover:bg-white hover:text-foreground">
-                <Phone className="h-5 w-5" />
-                Call for Bulk Orders
-              </Button>
-            </a>
+           
           </div>
 
           {/* Trust Badges */}
@@ -59,7 +54,7 @@ export const CTASection = () => {
               <Phone className="h-6 w-6 text-primary" />
               <div>
                 <p className="text-white font-medium">Expert Support</p>
-                <p className="text-white/60 text-sm">Call: +91 92502 14749</p>
+                
               </div>
             </div>
           </div>
