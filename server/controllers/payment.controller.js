@@ -678,7 +678,50 @@ export const paymentVerification = asyncHandler(async (req, res) => {
       for (const item of cartItems) {
         const variant = item.productVariant;
         // Reuse the same helper from above
-        const price = calculateSlabPrice(variant, item.quantity);
+        let price = calculateSlabPrice(variant, item.quantity);
+        let flashSaleInfo = null;
+
+        // Check for active flash sale for this product
+        const now = new Date();
+        const flashSaleProduct = await tx.flashSaleProduct.findFirst({
+          where: {
+            productId: variant.product.id,
+            flashSale: {
+              isActive: true,
+              startTime: { lte: now },
+              endTime: { gte: now },
+            },
+          },
+          include: {
+            flashSale: {
+              select: {
+                id: true,
+                name: true,
+                discountPercentage: true,
+              },
+            },
+          },
+        });
+
+        // Apply flash sale discount if applicable
+        if (flashSaleProduct) {
+          const priceBeforeFlashSale = price;
+          const discountAmount = (price * flashSaleProduct.flashSale.discountPercentage) / 100;
+          price = Math.round((price - discountAmount) * 100) / 100;
+          flashSaleInfo = {
+            flashSaleId: flashSaleProduct.flashSale.id,
+            flashSaleName: flashSaleProduct.flashSale.name,
+            flashSaleDiscount: flashSaleProduct.flashSale.discountPercentage,
+            originalPrice: priceBeforeFlashSale,
+          };
+
+          // Increment sold count for the flash sale
+          await tx.flashSale.update({
+            where: { id: flashSaleProduct.flashSale.id },
+            data: { soldCount: { increment: item.quantity } },
+          });
+        }
+
         const subtotal = price * item.quantity;
 
         // Create order item
@@ -690,6 +733,7 @@ export const paymentVerification = asyncHandler(async (req, res) => {
             price,
             quantity: item.quantity,
             subtotal,
+            ...(flashSaleInfo || {}),
           },
         });
         orderItems.push(orderItem);
@@ -771,9 +815,10 @@ export const paymentVerification = asyncHandler(async (req, res) => {
           name: item.product.name,
           variant: item.variant.attributes.map(attr =>
             `${attr.attributeValue.attribute.name}: ${attr.attributeValue.value}`
-          ).join(", "),
+          ).join(", ") + (item.flashSaleName ? ` ⚡ ${item.flashSaleName}` : ""),
           quantity: item.quantity,
           price: parseFloat(item.price).toFixed(2),
+          originalPrice: item.originalPrice ? parseFloat(item.originalPrice).toFixed(2) : null,
         }));
 
         // Send email
@@ -974,6 +1019,13 @@ export const getOrderHistory = asyncHandler(async (req, res) => {
         price: parseFloat(item.price),
         quantity: item.quantity,
         subtotal: parseFloat(item.subtotal),
+        // Flash sale info
+        flashSale: item.flashSaleId ? {
+          id: item.flashSaleId,
+          name: item.flashSaleName,
+          discountPercentage: item.flashSaleDiscount,
+          originalPrice: item.originalPrice ? parseFloat(item.originalPrice) : null,
+        } : null,
         // Include return request information
         returnRequest: item.returnRequests && item.returnRequests.length > 0
           ? {
@@ -1129,6 +1181,13 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
       price: parseFloat(item.price),
       quantity: item.quantity,
       subtotal: parseFloat(item.subtotal),
+      // Flash sale info
+      flashSale: item.flashSaleId ? {
+        id: item.flashSaleId,
+        name: item.flashSaleName,
+        discountPercentage: item.flashSaleDiscount,
+        originalPrice: item.originalPrice ? parseFloat(item.originalPrice) : null,
+      } : null,
       // Include return request information
       returnRequest: item.returnRequests && item.returnRequests.length > 0
         ? {
@@ -1556,9 +1615,48 @@ export const createCashOrder = asyncHandler(async (req, res) => {
     };
 
     // Check inventory and calculate totals
+    const processedItems = [];
+    const now = new Date();
+
     for (const item of cartItems) {
       const variant = item.productVariant;
-      const price = calculateSlabPrice(variant, item.quantity);
+      let price = calculateSlabPrice(variant, item.quantity);
+      let flashSaleInfo = null;
+      let priceBeforeFlashSale = price;
+
+      // Check for active flash sale for this product
+      const flashSaleProduct = await prisma.flashSaleProduct.findFirst({
+        where: {
+          productId: variant.product.id,
+          flashSale: {
+            isActive: true,
+            startTime: { lte: now },
+            endTime: { gte: now },
+          },
+        },
+        include: {
+          flashSale: {
+            select: {
+              id: true,
+              name: true,
+              discountPercentage: true,
+            },
+          },
+        },
+      });
+
+      // Apply flash sale discount if applicable
+      if (flashSaleProduct) {
+        const discountAmount = (price * flashSaleProduct.flashSale.discountPercentage) / 100;
+        price = Math.round((price - discountAmount) * 100) / 100;
+        flashSaleInfo = {
+          flashSaleId: flashSaleProduct.flashSale.id,
+          flashSaleName: flashSaleProduct.flashSale.name,
+          flashSaleDiscount: flashSaleProduct.flashSale.discountPercentage,
+          originalPrice: priceBeforeFlashSale,
+        };
+      }
+
       const itemTotal = price * item.quantity;
       subTotal += itemTotal;
 
@@ -1566,6 +1664,13 @@ export const createCashOrder = asyncHandler(async (req, res) => {
       if (variant.quantity < item.quantity) {
         throw new ApiError(400, `Not enough stock for ${variant.product.name}`);
       }
+
+      processedItems.push({
+        item,
+        price,
+        subtotal: itemTotal,
+        flashSaleInfo
+      });
     }
 
     // Calculate shipping cost based on Shiprocket settings
@@ -1663,11 +1768,9 @@ export const createCashOrder = asyncHandler(async (req, res) => {
 
       // 2. Create order items and update inventory
       const orderItems = [];
-      for (const item of cartItems) {
+      for (const processedItem of processedItems) {
+        const { item, price, subtotal, flashSaleInfo } = processedItem;
         const variant = item.productVariant;
-        // Reuse helper for consistency
-        const price = calculateSlabPrice(variant, item.quantity);
-        const subtotal = price * item.quantity;
 
         const orderItem = await tx.orderItem.create({
           data: {
@@ -1677,6 +1780,7 @@ export const createCashOrder = asyncHandler(async (req, res) => {
             price,
             quantity: item.quantity,
             subtotal,
+            ...(flashSaleInfo || {})
           },
         });
         orderItems.push(orderItem);
@@ -1690,6 +1794,14 @@ export const createCashOrder = asyncHandler(async (req, res) => {
             },
           },
         });
+
+        // Update Flash Sale Sold Count
+        if (flashSaleInfo?.flashSaleId) {
+          await tx.flashSale.update({
+            where: { id: flashSaleInfo.flashSaleId },
+            data: { soldCount: { increment: item.quantity } },
+          });
+        }
 
         // Log inventory change
         await tx.inventoryLog.create({
@@ -1772,6 +1884,7 @@ export const createCashOrder = asyncHandler(async (req, res) => {
             shipping: parseFloat(result.order.shippingCost || 0).toFixed(2),
             tax: parseFloat(result.order.tax || 0).toFixed(2),
             discount: parseFloat(result.order.discount || 0).toFixed(2),
+            codCharge: parseFloat(result.order.codCharge || 0).toFixed(2),
             couponCode: result.order.couponCode || "",
             total: parseFloat(result.order.total).toFixed(2),
             shippingAddress: shippingAddress,

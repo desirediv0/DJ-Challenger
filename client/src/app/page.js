@@ -9,6 +9,7 @@ import { TrustSection } from "@/components/sections/TrustSection";
 import { SocialMediaSection } from "@/components/sections/SocialMediaSection";
 import CategoriesCarousel from "@/components/sections/CategoriesCarousel";
 import HeroSection from "@/components/sections/HeroSection";
+import { FlashSaleSection } from "@/components/sections/FlashSaleSection";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
         <HeroSection />
         <ShopByCategory />
         <FeaturedProducts />
+        <FlashSaleSection />
         <BestSellers />
         <TrendingProducts />
         <NewArrivals />

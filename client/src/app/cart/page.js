@@ -157,10 +157,15 @@ const CartItem = React.memo(
                                         {formatCurrency(item.originalPrice)}
                                     </span>
                                 )}
-                                <span className="font-semibold text-gray-900">
+                                <span className={`font-semibold ${item.priceSource === 'FLASH_SALE' ? 'text-orange-600' : 'text-gray-900'}`}>
                                     {formatCurrency(item.price)}
                                 </span>
-                                {item.priceSource && item.priceSource !== "DEFAULT" && (
+                                {item.priceSource === 'FLASH_SALE' && item.flashSale && (
+                                    <span className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                                        ⚡ {item.flashSale.discountPercentage}% OFF
+                                    </span>
+                                )}
+                                {item.priceSource && item.priceSource !== "DEFAULT" && item.priceSource !== "FLASH_SALE" && (
                                     <span className="text-xs text-green-600 font-medium">
                                         Bulk pricing applied
                                     </span>

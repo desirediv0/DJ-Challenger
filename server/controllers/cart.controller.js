@@ -137,6 +137,46 @@ export const getUserCart = asyncHandler(async (req, res) => {
         }
       }
 
+      // Check for active flash sale for this product
+      const now = new Date();
+      const flashSaleProduct = await prisma.flashSaleProduct.findFirst({
+        where: {
+          productId: variant.productId,
+          flashSale: {
+            isActive: true,
+            startTime: { lte: now },
+            endTime: { gte: now },
+          },
+        },
+        include: {
+          flashSale: {
+            select: {
+              id: true,
+              name: true,
+              discountPercentage: true,
+              endTime: true,
+            },
+          },
+        },
+      });
+
+      // Apply flash sale discount if applicable
+      let flashSaleInfo = null;
+      let priceBeforeFlashSale = effectivePrice;
+
+      if (flashSaleProduct) {
+        const discountAmount = (effectivePrice * flashSaleProduct.flashSale.discountPercentage) / 100;
+        effectivePrice = Math.round((effectivePrice - discountAmount) * 100) / 100;
+        priceSource = "FLASH_SALE";
+        flashSaleInfo = {
+          flashSaleId: flashSaleProduct.flashSale.id,
+          name: flashSaleProduct.flashSale.name,
+          discountPercentage: flashSaleProduct.flashSale.discountPercentage,
+          endTime: flashSaleProduct.flashSale.endTime,
+          originalPrice: priceBeforeFlashSale,
+        };
+      }
+
       const itemTotal = effectivePrice * item.quantity;
       subtotal += itemTotal;
 
@@ -200,6 +240,7 @@ export const getUserCart = asyncHandler(async (req, res) => {
             name: pc.category?.name,
           })),
         },
+        flashSale: flashSaleInfo,
       };
     })
   );

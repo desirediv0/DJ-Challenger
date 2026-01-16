@@ -215,6 +215,43 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     take: parseInt(limit),
   });
 
+  // Batch fetch active flash sales for all products in this result
+  const now = new Date();
+  const productIds = products.map(p => p.id);
+
+  const flashSaleProducts = await prisma.flashSaleProduct.findMany({
+    where: {
+      productId: { in: productIds },
+      flashSale: {
+        isActive: true,
+        startTime: { lte: now },
+        endTime: { gte: now },
+      },
+    },
+    include: {
+      flashSale: {
+        select: {
+          id: true,
+          name: true,
+          discountPercentage: true,
+          endTime: true,
+        },
+      },
+    },
+  });
+
+  // Create a map of productId -> flashSale data for quick lookup
+  const flashSaleMap = {};
+  flashSaleProducts.forEach(fsp => {
+    flashSaleMap[fsp.productId] = {
+      isActive: true,
+      flashSaleId: fsp.flashSale.id,
+      name: fsp.flashSale.name,
+      discountPercentage: fsp.flashSale.discountPercentage,
+      endTime: fsp.flashSale.endTime,
+    };
+  });
+
   // Format products for response
   const formattedProducts = products.map((product) => {
     // Get primary category (first in the list)
@@ -244,6 +281,25 @@ export const getAllProducts = asyncHandler(async (req, res) => {
       }
     }
 
+    // Calculate base price (sale price if exists, otherwise regular price)
+    const basePrice = product.variants.length > 0
+      ? parseFloat(product.variants[0].salePrice || product.variants[0].price)
+      : null;
+    const regularPrice = product.variants.length > 0
+      ? parseFloat(product.variants[0].price)
+      : null;
+    const hasSale = product.variants.length > 0 && product.variants[0].salePrice !== null;
+
+    // Get flash sale data for this product
+    const flashSale = flashSaleMap[product.id] || null;
+
+    // Calculate flash sale price if applicable
+    let flashSalePrice = null;
+    if (flashSale && basePrice !== null) {
+      const discountAmount = (basePrice * flashSale.discountPercentage) / 100;
+      flashSalePrice = Math.round((basePrice - discountAmount) * 100) / 100; // Round to 2 decimals
+    }
+
     return {
       id: product.id,
       name: product.name,
@@ -268,20 +324,16 @@ export const getAllProducts = asyncHandler(async (req, res) => {
           }))
           : [],
       })),
-      basePrice:
-        product.variants.length > 0
-          ? parseFloat(
-            product.variants[0].salePrice || product.variants[0].price
-          )
-          : null,
-      hasSale:
-        product.variants.length > 0 && product.variants[0].salePrice !== null,
-      regularPrice:
-        product.variants.length > 0
-          ? parseFloat(product.variants[0].price)
-          : null,
+      basePrice,
+      hasSale,
+      regularPrice,
       variantCount: product._count.variants,
       reviewCount: product._count.reviews,
+      // Flash sale data
+      flashSale: flashSale ? {
+        ...flashSale,
+        flashSalePrice,
+      } : null,
     };
   });
 
@@ -549,6 +601,47 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
         ? parseFloat(product.variants[0].price || 0)
         : 0,
   };
+
+  // Fetch flash sale for this product
+  const now = new Date();
+  const flashSaleProduct = await prisma.flashSaleProduct.findFirst({
+    where: {
+      productId: product.id,
+      flashSale: {
+        isActive: true,
+        startTime: { lte: now },
+        endTime: { gte: now },
+      },
+    },
+    include: {
+      flashSale: {
+        select: {
+          id: true,
+          name: true,
+          discountPercentage: true,
+          endTime: true,
+        },
+      },
+    },
+  });
+
+  // Add flash sale to formattedProduct if exists
+  if (flashSaleProduct) {
+    const basePrice = formattedProduct.basePrice;
+    const discountAmount = (basePrice * flashSaleProduct.flashSale.discountPercentage) / 100;
+    const flashSalePrice = Math.round((basePrice - discountAmount) * 100) / 100;
+
+    formattedProduct.flashSale = {
+      isActive: true,
+      flashSaleId: flashSaleProduct.flashSale.id,
+      name: flashSaleProduct.flashSale.name,
+      discountPercentage: flashSaleProduct.flashSale.discountPercentage,
+      endTime: flashSaleProduct.flashSale.endTime,
+      flashSalePrice,
+    };
+  } else {
+    formattedProduct.flashSale = null;
+  }
 
   // Add related products
   const relatedProducts = categoryId
@@ -873,6 +966,43 @@ export const getProductsByType = asyncHandler(async (req, res) => {
     take: parseInt(limit),
   });
 
+  // Batch fetch active flash sales for these products
+  const now = new Date();
+  const productIds = products.map(p => p.id);
+
+  const flashSaleProducts = await prisma.flashSaleProduct.findMany({
+    where: {
+      productId: { in: productIds },
+      flashSale: {
+        isActive: true,
+        startTime: { lte: now },
+        endTime: { gte: now },
+      },
+    },
+    include: {
+      flashSale: {
+        select: {
+          id: true,
+          name: true,
+          discountPercentage: true,
+          endTime: true,
+        },
+      },
+    },
+  });
+
+  // Create flash sale map
+  const flashSaleMap = {};
+  flashSaleProducts.forEach(fsp => {
+    flashSaleMap[fsp.productId] = {
+      isActive: true,
+      flashSaleId: fsp.flashSale.id,
+      name: fsp.flashSale.name,
+      discountPercentage: fsp.flashSale.discountPercentage,
+      endTime: fsp.flashSale.endTime,
+    };
+  });
+
   // Format the response data
   const formattedProducts = products.map((product) => {
     // Get primary category
@@ -902,6 +1032,23 @@ export const getProductsByType = asyncHandler(async (req, res) => {
       }
     }
 
+    // Calculate base price
+    const basePrice = product.variants.length > 0
+      ? parseFloat(product.variants[0].salePrice || product.variants[0].price)
+      : null;
+    const regularPrice = product.variants.length > 0
+      ? parseFloat(product.variants[0].price)
+      : null;
+    const hasSale = product.variants.length > 0 && product.variants[0].salePrice !== null;
+
+    // Get flash sale data
+    const flashSale = flashSaleMap[product.id] || null;
+    let flashSalePrice = null;
+    if (flashSale && basePrice !== null) {
+      const discountAmount = (basePrice * flashSale.discountPercentage) / 100;
+      flashSalePrice = Math.round((basePrice - discountAmount) * 100) / 100;
+    }
+
     return {
       id: product.id,
       name: product.name,
@@ -926,20 +1073,15 @@ export const getProductsByType = asyncHandler(async (req, res) => {
           }))
           : [],
       })),
-      basePrice:
-        product.variants.length > 0
-          ? parseFloat(
-            product.variants[0].salePrice || product.variants[0].price
-          )
-          : null,
-      hasSale:
-        product.variants.length > 0 && product.variants[0].salePrice !== null,
-      regularPrice:
-        product.variants.length > 0
-          ? parseFloat(product.variants[0].price)
-          : null,
+      basePrice,
+      hasSale,
+      regularPrice,
       variantCount: product._count.variants,
       reviewCount: product._count.reviews,
+      flashSale: flashSale ? {
+        ...flashSale,
+        flashSalePrice,
+      } : null,
     };
   });
 

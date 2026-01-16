@@ -799,16 +799,56 @@ export const createOrder = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, `Insufficient stock for ${variant.product.name}`);
     }
 
-    const price = variant.salePrice || variant.price;
-    const itemTotal = parseFloat(price) * item.quantity;
+    // Get base price (sale price if exists, otherwise regular price)
+    const basePrice = variant.salePrice || variant.price;
+    let finalPrice = parseFloat(basePrice);
+    let flashSaleInfo = null;
+
+    // Check for active flash sale for this product
+    const now = new Date();
+    const flashSaleProduct = await prisma.flashSaleProduct.findFirst({
+      where: {
+        productId: variant.productId,
+        flashSale: {
+          isActive: true,
+          startTime: { lte: now },
+          endTime: { gte: now },
+        },
+      },
+      include: {
+        flashSale: {
+          select: {
+            id: true,
+            name: true,
+            discountPercentage: true,
+          },
+        },
+      },
+    });
+
+    // Apply flash sale discount if applicable
+    if (flashSaleProduct) {
+      const discountAmount = (finalPrice * flashSaleProduct.flashSale.discountPercentage) / 100;
+      const priceBeforeFlashSale = finalPrice;
+      finalPrice = Math.round((finalPrice - discountAmount) * 100) / 100;
+      flashSaleInfo = {
+        flashSaleId: flashSaleProduct.flashSale.id,
+        flashSaleName: flashSaleProduct.flashSale.name,
+        flashSaleDiscount: flashSaleProduct.flashSale.discountPercentage,
+        originalPrice: priceBeforeFlashSale,
+      };
+    }
+
+    const itemTotal = finalPrice * item.quantity;
     subTotal += itemTotal;
 
     orderItems.push({
       productId: variant.productId,
       variantId: variant.id,
-      price: parseFloat(price),
+      price: finalPrice,
       quantity: item.quantity,
       subtotal: itemTotal,
+      ...(flashSaleInfo || {}),
     });
   }
 
@@ -865,6 +905,16 @@ export const createOrder = asyncHandler(async (req, res, next) => {
           percentage: coupon.partnerCommission,
         },
       });
+    }
+
+    // Update Flash Sale Sold Count
+    for (const orderItem of orderItems) {
+      if (orderItem.flashSaleId) {
+        await tx.flashSale.update({
+          where: { id: orderItem.flashSaleId },
+          data: { soldCount: { increment: orderItem.quantity } },
+        });
+      }
     }
 
     // Update inventory for each variant

@@ -389,10 +389,21 @@ function FlashSaleForm({
           const response = await flashSales.getFlashSaleById(flashSaleId);
           if (response.data.success) {
             const sale = response.data.data.flashSale;
+
+            // Helper to convert UTC date to local datetime-local format string
+            const toLocalISOString = (dateStr: string) => {
+              const date = new Date(dateStr);
+              // Get timezone offset in minutes (e.g., -330 for IST)
+              const offset = date.getTimezoneOffset();
+              // Adjust date by subtracting the offset
+              const localDate = new Date(date.getTime() - (offset * 60000));
+              return localDate.toISOString().slice(0, 16);
+            };
+
             setFormData({
               name: sale.name,
-              startTime: new Date(sale.startTime).toISOString().slice(0, 16),
-              endTime: new Date(sale.endTime).toISOString().slice(0, 16),
+              startTime: toLocalISOString(sale.startTime),
+              endTime: toLocalISOString(sale.endTime),
               discountPercentage: sale.discountPercentage.toString(),
               maxQuantity: sale.maxQuantity?.toString() || "",
               isActive: sale.isActive,
@@ -400,6 +411,7 @@ function FlashSaleForm({
             });
           }
         } catch (error: any) {
+          // ... existing code ...
           toast.error(
             error.response?.data?.message || t("flash_sales.messages.load_sale_error")
           );

@@ -1445,6 +1445,13 @@ export const getOrderConfirmationTemplate = (data, storeConfig = null) => {
                     <span class="summary-label">Tax</span>
                     <span class="summary-value">₹${parseFloat(data.tax).toFixed(2)}</span>
                 </div>
+                ${parseFloat(data.codCharge) > 0
+            ? `<div class="summary-row">
+                    <span class="summary-label">COD Surcharge</span>
+                    <span class="summary-value">₹${parseFloat(data.codCharge).toFixed(2)}</span>
+                </div>`
+            : ""
+        }
                 <div class="summary-row total-row">
                     <span class="summary-label">Total</span>
                     <span class="summary-value">₹${parseFloat(data.total).toFixed(2)}</span>

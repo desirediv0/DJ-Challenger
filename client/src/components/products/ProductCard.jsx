@@ -211,6 +211,11 @@ export const ProductCard = ({ product }) => {
   const priceField = parsePrice(product.price);
   const salePriceField = parsePrice(product.salePrice);
 
+  // Check for active flash sale
+  const hasFlashSale = product.flashSale?.isActive === true;
+  const flashSalePrice = hasFlashSale ? parsePrice(product.flashSale.flashSalePrice) : null;
+  const flashSaleDiscountPercent = hasFlashSale ? product.flashSale.discountPercentage : 0;
+
   let hasSale = false;
   if (product.hasSale !== undefined && product.hasSale !== null) {
     hasSale = Boolean(product.hasSale);
@@ -255,9 +260,24 @@ export const ProductCard = ({ product }) => {
     currentPrice = 0;
   }
 
-  const discountPercent = hasSale && originalPrice && currentPrice
-    ? calculateDiscountPercentage(originalPrice, currentPrice)
-    : 0;
+  // If flash sale is active, use flash sale price and set original price
+  let displayPrice = currentPrice;
+  let showFlashSaleBadge = false;
+  
+  if (hasFlashSale && flashSalePrice !== null) {
+    // Store original price before flash sale
+    if (!originalPrice) {
+      originalPrice = currentPrice;
+    }
+    displayPrice = flashSalePrice;
+    showFlashSaleBadge = true;
+  }
+
+  const discountPercent = showFlashSaleBadge 
+    ? flashSaleDiscountPercent 
+    : (hasSale && originalPrice && currentPrice
+        ? calculateDiscountPercentage(originalPrice, currentPrice)
+        : 0);
 
 
 
@@ -296,8 +316,14 @@ export const ProductCard = ({ product }) => {
                     {typeof product.category === 'object' ? product.category.name : product.category}
                 </span>
             )}
-            {/* Sale Badge */}
-            {hasSale && discountPercent > 0 && (
+            {/* Flash Sale Badge */}
+            {showFlashSaleBadge && discountPercent > 0 && (
+                <div className="px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-md shadow-lg w-fit animate-pulse flex items-center gap-1">
+                    <span>⚡</span> {discountPercent}% OFF
+                </div>
+            )}
+            {/* Regular Sale Badge (only if not flash sale) */}
+            {!showFlashSaleBadge && hasSale && discountPercent > 0 && (
                 <div className="px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-md shadow-sm w-fit animate-pulse">
                     {discountPercent}% OFF
                 </div>
@@ -353,10 +379,10 @@ export const ProductCard = ({ product }) => {
              {showPrice ? (
                  <>
                     <div className="flex items-center gap-2">
-                        <span className="text-xl font-bold text-primary">
-                            {formatCurrency(currentPrice)}
+                        <span className={`text-xl font-bold ${showFlashSaleBadge ? 'text-orange-600' : 'text-primary'}`}>
+                            {formatCurrency(displayPrice)}
                         </span>
-                        {hasSale && originalPrice && (
+                        {(hasSale || showFlashSaleBadge) && originalPrice && (
                             <span className="text-sm text-gray-400 line-through decoration-gray-400">
                                 {formatCurrency(originalPrice)}
                             </span>

@@ -173,6 +173,43 @@ export const getProductsByCategory = asyncHandler(async (req, res) => {
     take: parseInt(limit),
   });
 
+  // Batch fetch active flash sales for products
+  const now = new Date();
+  const productIds = products.map(p => p.id);
+
+  const flashSaleProducts = await prisma.flashSaleProduct.findMany({
+    where: {
+      productId: { in: productIds },
+      flashSale: {
+        isActive: true,
+        startTime: { lte: now },
+        endTime: { gte: now },
+      },
+    },
+    include: {
+      flashSale: {
+        select: {
+          id: true,
+          name: true,
+          discountPercentage: true,
+          endTime: true,
+        },
+      },
+    },
+  });
+
+  // Create flash sale map
+  const flashSaleMap = {};
+  flashSaleProducts.forEach(fsp => {
+    flashSaleMap[fsp.productId] = {
+      isActive: true,
+      flashSaleId: fsp.flashSale.id,
+      name: fsp.flashSale.name,
+      discountPercentage: fsp.flashSale.discountPercentage,
+      endTime: fsp.flashSale.endTime,
+    };
+  });
+
   // Format the response
   const formattedProducts = products.map((product) => {
     // Get primary category
@@ -202,6 +239,23 @@ export const getProductsByCategory = asyncHandler(async (req, res) => {
       }
     }
 
+    // Calculate prices
+    const basePrice = product.variants.length > 0
+      ? Math.min(...product.variants.map((v) => parseFloat(v.salePrice || v.price)))
+      : null;
+    const regularPrice = product.variants.length > 0
+      ? Math.min(...product.variants.map((v) => parseFloat(v.price)))
+      : null;
+    const hasSale = product.variants.some(v => v.salePrice !== null);
+
+    // Get flash sale data
+    const flashSale = flashSaleMap[product.id] || null;
+    let flashSalePrice = null;
+    if (flashSale && basePrice !== null) {
+      const discountAmount = (basePrice * flashSale.discountPercentage) / 100;
+      flashSalePrice = Math.round((basePrice - discountAmount) * 100) / 100;
+    }
+
     return {
       ...product,
       category: primaryCategory,
@@ -211,12 +265,13 @@ export const getProductsByCategory = asyncHandler(async (req, res) => {
       })),
       // Add fallback image
       image: imageUrl ? getFileUrl(imageUrl) : null,
-      basePrice:
-        product.variants.length > 0
-          ? Math.min(
-              ...product.variants.map((v) => parseFloat(v.salePrice || v.price))
-            )
-          : null,
+      basePrice,
+      regularPrice,
+      hasSale,
+      flashSale: flashSale ? {
+        ...flashSale,
+        flashSalePrice,
+      } : null,
     };
   });
 

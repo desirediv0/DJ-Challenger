@@ -588,8 +588,45 @@ export default function ProductContent({ slug }) {
             <span className="text-sm text-gray-500">{product.avgRating ? `${product.avgRating} (${product.reviewCount} reviews)` : "No reviews yet"}</span>
           </div>
 
+          {/* Flash Sale Banner */}
+          {product.flashSale?.isActive && (
+            <div className="mb-4 p-4 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white rounded-lg shadow-lg">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <p className="font-bold text-lg">Flash Sale</p>
+                    <p className="text-sm opacity-90">{product.flashSale.name}</p>
+                  </div>
+                </div>
+                <div className="bg-white/20 px-4 py-2 rounded-full">
+                  <span className="font-bold text-xl">{product.flashSale.discountPercentage}% OFF</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Price */}
-          <div className="mb-6">{getPriceDisplay()}</div>
+          <div className="mb-6">
+            {product.flashSale?.isActive ? (
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  <span className="text-3xl md:text-4xl font-bold text-orange-600">
+                    {formatCurrency(product.flashSale.flashSalePrice)}
+                  </span>
+                  <span className="text-xl md:text-2xl text-gray-500 line-through">
+                    {formatCurrency(product.basePrice)}
+                  </span>
+                  <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs md:text-sm font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                    ⚡ {product.flashSale.discountPercentage}% OFF
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">Inclusive of all taxes | Flash Sale Price</p>
+              </div>
+            ) : (
+              getPriceDisplay()
+            )}
+          </div>
 
           {/* Short Description */}
           {product.shortDescription && (

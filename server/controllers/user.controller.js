@@ -975,6 +975,43 @@ export const getUserWishlist = asyncHandler(async (req, res, next) => {
       orderBy: { createdAt: "desc" },
     });
 
+    // Batch fetch active flash sales for wishlist products
+    const now = new Date();
+    const productIds = wishlistItems.map(item => item.productId);
+
+    const flashSaleProducts = await prisma.flashSaleProduct.findMany({
+      where: {
+        productId: { in: productIds },
+        flashSale: {
+          isActive: true,
+          startTime: { lte: now },
+          endTime: { gte: now },
+        },
+      },
+      include: {
+        flashSale: {
+          select: {
+            id: true,
+            name: true,
+            discountPercentage: true,
+            endTime: true,
+          },
+        },
+      },
+    });
+
+    // Create flash sale map
+    const flashSaleMap = {};
+    flashSaleProducts.forEach(fsp => {
+      flashSaleMap[fsp.productId] = {
+        isActive: true,
+        flashSaleId: fsp.flashSale.id,
+        name: fsp.flashSale.name,
+        discountPercentage: fsp.flashSale.discountPercentage,
+        endTime: fsp.flashSale.endTime,
+      };
+    });
+
     // Format the response with improved image handling
     const formattedItems = wishlistItems.map((item) => {
       const product = item.product;
@@ -1030,6 +1067,14 @@ export const getUserWishlist = asyncHandler(async (req, res, next) => {
         firstVariant?.salePrice &&
         firstVariant?.salePrice < firstVariant?.price;
 
+      // Get flash sale data
+      const flashSale = flashSaleMap[product.id] || null;
+      let flashSalePrice = null;
+      if (flashSale && price > 0) {
+        const discountAmount = (parseFloat(price) * flashSale.discountPercentage) / 100;
+        flashSalePrice = Math.round((parseFloat(price) - discountAmount) * 100) / 100;
+      }
+
       return {
         id: item.id,
         productId: product.id,
@@ -1038,6 +1083,7 @@ export const getUserWishlist = asyncHandler(async (req, res, next) => {
         price: price,
         regularPrice: regularPrice,
         hasSale: hasSale,
+        flashSale: flashSale ? { ...flashSale, flashSalePrice } : null,
         image: primaryImageUrl ? getFileUrl(primaryImageUrl) : null,
         images: allImages,
         slug: product.slug,

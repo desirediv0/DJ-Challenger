@@ -151,9 +151,16 @@ export function Navbar() {
                   +91 92502 14749
                 </a>
               </div>
-              <div className="flex items-center gap-1.5 mx-auto md:mx-0 font-medium">
-                <Sparkles className="h-4 w-4" />
-                Free Shipping on Orders ₹999+ | Factory Direct Prices
+              <div className="flex items-center gap-3 mx-auto md:mx-0">
+                <div className="flex items-center gap-1.5 font-medium">
+                  <Sparkles className="h-4 w-4" />
+                  Free Shipping on Orders ₹999+
+                </div>
+                <span className="hidden sm:inline text-white/50">|</span>
+                <Link href="/products?flashSale=true" className="hidden sm:flex items-center gap-1.5 font-bold hover:text-yellow-200 transition-colors group">
+                  <Zap className="h-4 w-4 text-yellow-300 animate-pulse group-hover:scale-110 transition-transform" />
+                  <span className="text-yellow-200">Flash Sale Live!</span>
+                </Link>
               </div>
               <div className="hidden md:flex items-center gap-4">
                 <Link href="/shipping-policy" className="hover:text-white/80 transition-colors">Shipping</Link>

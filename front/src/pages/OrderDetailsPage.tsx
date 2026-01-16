@@ -128,6 +128,10 @@ export default function OrderDetailsPage() {
       createdAt: string;
       processedAt?: string;
     } | null;
+    // Flash sale fields
+    flashSaleName?: string;
+    flashSaleDiscount?: number;
+    originalPrice?: number;
   }
 
   interface OrderUpdate {
@@ -650,6 +654,16 @@ export default function OrderDetailsPage() {
                           )}
                         </div>
                       )}
+
+                      {/* Flash Sale Badge */}
+                      {item.flashSaleName && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <Badge className="bg-orange-50 text-orange-600 border-orange-200 text-[10px] px-2 py-0 h-5 font-normal">
+                            ⚡ {item.flashSaleName}
+                          </Badge>
+                          <span className="text-xs text-orange-600 font-medium">-{item.flashSaleDiscount}% OFF</span>
+                        </div>
+                      )}
                       {/* Return Request Badge */}
                       {item.returnRequest && (
                         <div className="mt-2">
@@ -669,6 +683,11 @@ export default function OrderDetailsPage() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-sm text-[#9CA3AF] mb-1">{t('orders.details.price')}</p>
+                      {item.originalPrice && item.originalPrice > item.price && (
+                        <p className="text-xs text-[#9CA3AF] line-through">
+                          {formatCurrency(item.originalPrice)}
+                        </p>
+                      )}
                       <p className="font-semibold text-[#1F2937] mb-3">
                         {formatCurrency(item.price)}
                       </p>

@@ -47,6 +47,8 @@ interface PricingSlab {
     maxQty: number | null;
     price: number;
     createdAt: string;
+    product?: { id: string; name: string };
+    variant?: { id: string; sku: string; product: { id: string; name: string } };
 }
 
 interface Product {
@@ -275,16 +277,23 @@ export default function PricingSlabsPage() {
         }
     };
 
-    const getProductName = (productId: string | null) => {
-        if (!productId) return "N/A";
-        const product = products.find((p) => p.id === productId);
+    const getProductName = (slab: PricingSlab) => {
+        // Use product data from API response first
+        if (slab.product) {
+            return slab.product.name;
+        }
+        // Fallback to products array lookup
+        if (!slab.productId) return "N/A";
+        const product = products.find((p) => p.id === slab.productId);
         return product?.name || "Unknown Product";
     };
 
-    const getVariantInfo = (variantId: string | null) => {
-        if (!variantId) return "N/A";
-        const variant = variants.find((v) => v.id === variantId);
-        return variant ? `${variant.sku} (${variant.product.name})` : "Unknown Variant";
+    const getVariantInfo = (slab: PricingSlab) => {
+        // Use variant data directly from API response
+        if (slab.variant) {
+            return `${slab.variant.sku} (${slab.variant.product?.name || "Unknown Product"})`;
+        }
+        return "N/A";
     };
 
     const filteredSlabs = slabs.filter((slab) => {
@@ -394,8 +403,8 @@ export default function PricingSlabsPage() {
                                         </TableCell>
                                         <TableCell>
                                             {slab.variantId
-                                                ? getVariantInfo(slab.variantId)
-                                                : getProductName(slab.productId)}
+                                                ? getVariantInfo(slab)
+                                                : getProductName(slab)}
                                         </TableCell>
                                         <TableCell>{slab.minQty}</TableCell>
                                         <TableCell>{slab.maxQty || "∞"}</TableCell>

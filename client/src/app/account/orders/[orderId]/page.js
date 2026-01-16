@@ -209,9 +209,24 @@ export default function OrderDetailPage() {
                                                     ))}
                                                 </div>
                                             )}
+                                            {item.flashSale && (
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                                                        ⚡ {item.flashSale.name || "Flash Sale"}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400">-{item.flashSale.discountPercentage}% OFF</span>
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-between mt-2">
                                                 <span className="text-sm text-gray-500">Qty: {item.quantity}</span>
-                                                <span className="font-semibold text-gray-900">{formatCurrency(item.subtotal)}</span>
+                                                <div className="text-right">
+                                                    {item.flashSale?.originalPrice && (
+                                                        <span className="text-xs text-gray-400 line-through mr-2">
+                                                            {formatCurrency(item.flashSale.originalPrice * item.quantity)}
+                                                        </span>
+                                                    )}
+                                                    <span className="font-semibold text-gray-900">{formatCurrency(item.subtotal)}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -287,6 +302,12 @@ export default function OrderDetailPage() {
                                 <span className="text-gray-600">Tax</span>
                                 <span>{formatCurrency(order.tax)}</span>
                             </div>
+                            {order.codCharge > 0 && (
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">COD Surcharge</span>
+                                    <span>{formatCurrency(order.codCharge)}</span>
+                                </div>
+                            )}
                             <div className="border-t border-gray-100 pt-3 mt-3 flex justify-between font-semibold text-lg">
                                 <span>Total</span>
                                 <span className="text-primary">{formatCurrency(order.total)}</span>
