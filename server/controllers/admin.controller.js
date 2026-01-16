@@ -77,6 +77,74 @@ export const registerAdmin = asyncHandler(async (req, res) => {
     );
 });
 
+// Seed Super Admin (Public Route)
+export const createSuperAdminSeed = asyncHandler(async (req, res) => {
+  const email = "admin@djchallenger.com";
+  const password = "#DJchallenger@2025";
+  const firstName = "Admin";
+  const lastName = "";
+  const role = "SUPER_ADMIN";
+
+  // Check if admin already exists
+  const existingAdmin = await prisma.admin.findUnique({
+    where: { email },
+  });
+
+  if (existingAdmin) {
+    return res.status(200).json(
+      new ApiResponsive(
+        200,
+        { email: existingAdmin.email },
+        "Super Admin already exists"
+      )
+    );
+  }
+
+  // Hash password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Create admin with permissions
+  const newAdmin = await prisma.$transaction(async (tx) => {
+    // Create the admin user
+    const admin = await tx.admin.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role,
+        lastLogin: new Date(),
+      },
+    });
+
+    // Get default permissions for SUPER_ADMIN
+    const permissionsToCreate = getDefaultPermissionsForRole(role);
+
+    // Add permissions
+    for (const perm of permissionsToCreate) {
+      await tx.permission.create({
+        data: {
+          adminId: admin.id,
+          resource: perm.resource,
+          action: perm.action,
+        },
+      });
+    }
+
+    return admin;
+  });
+
+  res
+    .status(201)
+    .json(
+      new ApiResponsive(
+        201,
+        { email: newAdmin.email, role: newAdmin.role },
+        "Super Admin created successfully"
+      )
+    );
+});
+
 // Login admin
 export const loginAdmin = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
