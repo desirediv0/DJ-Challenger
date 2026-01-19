@@ -165,9 +165,15 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="py-6 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} DJ-Challenger. All rights reserved.
-          </p>
+          <div className="flex flex-col md:flex-row items-center gap-2">
+            <p className="text-gray-500 text-sm">
+              © {new Date().getFullYear()} DJ-Challenger. All rights reserved.
+            </p>
+            <span className="hidden md:inline text-gray-700">|</span>
+            <p className="text-gray-500 text-sm">
+              Designed by <a href="https://desirediv.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Desire Div</a>
+            </p>
+          </div>
           
           {/* Payment Icons */}
           <div className="flex items-center gap-4">
