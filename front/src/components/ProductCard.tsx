@@ -157,13 +157,6 @@ export function ProductCard({
     return null;
   }
 
-  // Format the price display
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(price);
-  };
 
   // Calculate discount percentage
   const getDiscountPercentage = (original: number, sale: number) => {
