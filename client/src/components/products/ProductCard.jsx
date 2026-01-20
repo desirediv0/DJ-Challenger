@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import {  Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2, ShoppingBag } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { fetchApi, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { useCart } from "@/lib/cart-context";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 
 // Helper function to format image URLs correctly
 const getImageUrl = (image) => {
@@ -24,8 +26,10 @@ const calculateDiscountPercentage = (regularPrice, salePrice) => {
 
 export const ProductCard = ({ product }) => {
   const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   
   // Logic from user request
   const [wishlistItems, setWishlistItems] = useState({});
@@ -284,6 +288,38 @@ export const ProductCard = ({ product }) => {
   // Price Visibility Check
   const showPrice = !priceVisibilitySettings?.hidePricesForGuests || isAuthenticated;
 
+  const handleAddToCart = async (e) => {
+    e.preventDefault(); // Prevent navigating to product page
+    e.stopPropagation();
+
+    if (!showPrice) {
+        toast.error("Please login to purchase items");
+        return;
+    }
+
+    setIsAddingToCart(true);
+    try {
+        // Use the first variant ID if available, otherwise assume product structure handles it or fails gracefully
+        // The CartContext expects productVariantId
+        const variantId = product.variants?.[0]?.id;
+        
+        if (!variantId) {
+            // Fallback or error if no variants structure matches
+             toast.error("Select options on product page");
+             router.push(`/products/${product.slug}`);
+             return;
+        }
+
+        await addToCart(variantId, 1);
+        toast.success("Added to bag");
+    } catch (error) {
+        console.error("Add to cart error:", error);
+        // Toast handled in context usually, but good to be safe
+    } finally {
+        setIsAddingToCart(false);
+    }
+  };
+
   return (
     <div
       className="group relative bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 border border-gray-100 hover:border-primary/20 h-full flex flex-col"
@@ -291,7 +327,7 @@ export const ProductCard = ({ product }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Product Image Area */}
-      <Link href={`/products/${product.slug}`} className="block relative aspect-[4/5] overflow-hidden bg-gray-50">
+      <Link href={`/products/${product.slug}`} className="block relative aspect-square overflow-hidden bg-gray-50">
         
         {/* Wishlist Button */}
         <button
@@ -374,57 +410,45 @@ export const ProductCard = ({ product }) => {
              </div>
         </div>
 
-        <div className="mt-auto pt-1 flex items-center justify-between border-t border-gray-50">
-          <div className="flex flex-col">
-             {showPrice ? (
-                 <>
-                    <div className="flex items-center gap-2">
-                        <span className={`text-xl font-bold ${showFlashSaleBadge ? 'text-orange-600' : 'text-primary'}`}>
-                            {formatCurrency(displayPrice)}
-                        </span>
-                        {(hasSale || showFlashSaleBadge) && originalPrice && (
-                            <span className="text-sm text-gray-400 line-through decoration-gray-400">
-                                {formatCurrency(originalPrice)}
-                            </span>
-                        )}
-                    </div>
-                 </>
-             ) : (
-                <Link href="/auth?redirect=products" className="text-sm font-medium text-primary hover:underline">
-                    Login to view price
-                </Link>
-             )}
-          </div>
+          <div className="mt-auto pt-3 flex items-center justify-between gap-2 border-t border-gray-50">
+            <div className="flex flex-col min-w-0">
+               {showPrice ? (
+                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
+                       <span className={`text-lg font-bold truncate ${showFlashSaleBadge ? 'text-orange-600' : 'text-primary'}`}>
+                           {formatCurrency(displayPrice)}
+                       </span>
+                       {(hasSale || showFlashSaleBadge) && originalPrice && (
+                           <span className="text-xs text-gray-400 line-through decoration-gray-400 truncate">
+                               {formatCurrency(originalPrice)}
+                           </span>
+                       )}
+                   </div>
+               ) : (
+                  <Link href="/auth?redirect=products" className="text-sm font-medium text-primary hover:underline truncate">
+                      Login to view price
+                  </Link>
+               )}
+            </div>
 
-          {/* Add to Cart / Quantity - Compact */}
-          {/* {!inCart ? (
+            {/* Add to Cart Button */}
             <Button
-              className="bg-primary hover:bg-primary/90 text-white rounded-full h-10 w-10 p-0 shadow-md hover:shadow-lg transition-all duration-300"
+              size="sm"
               onClick={handleAddToCart}
-              disabled={!showPrice} // Disable if price is hidden (guest)
-              title={!showPrice ? "Login to purchase" : "Add to Cart"}
+              disabled={!showPrice || isAddingToCart}
+              className={`flex-shrink-0 rounded-full shadow-sm hover:shadow-md transition-all duration-300 px-3 h-9 ${!showPrice ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-                {showAdded ? <Check className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+              {isAddingToCart ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                  <>
+                      {/* Icon only on small screens, Text on larger if space permits - or just keep it simple */}
+                      <ShoppingBag className="h-4 w-4" />
+                      <span className="ml-1.5 hidden sm:inline-block">Add</span>
+                  </>
+              )}
             </Button>
-          ) : (
-             <div className="flex items-center bg-gray-50 rounded-full border border-gray-100 shadow-sm h-10">
-                <button 
-                    onClick={handleDecrement}
-                    className="h-full px-3 text-gray-600 hover:text-primary transition-colors"
-                >
-                    <Minus className="h-3.5 w-3.5" />
-                </button>
-                <span className="text-sm font-bold text-gray-900 w-4 text-center">{quantity}</span>
-                <button 
-                    onClick={handleIncrement}
-                    className="h-full px-3 text-gray-600 hover:text-primary transition-colors"
-                >
-                    <Plus className="h-3.5 w-3.5" />
-                </button>
-             </div>
-          )} */}
+          </div>
         </div>
       </div>
-    </div>
   );
 };

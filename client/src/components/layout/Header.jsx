@@ -172,7 +172,7 @@ export function Navbar() {
               
               {/* Logo */}
               <Link href="/" className="flex-shrink-0">
-                <Image src="/logo.png" alt="DJ-Challenger" width={140} height={50} className="h-10 md:h-12 w-auto" priority />
+                <Image src="/logo.png" alt="DJ-Challenger" width={180} height={65} className="h-14 md:h-16 w-auto" priority />
               </Link>
 
               {/* Desktop Search Bar */}
@@ -201,6 +201,9 @@ export function Navbar() {
 
               {/* Desktop Navigation */}
               <nav className="hidden lg:flex items-center gap-1">
+                <Link href="/" className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${pathname === "/" ? "text-primary bg-primary/5" : "text-gray-700 hover:text-primary hover:bg-gray-50"}`}>
+                  Home
+                </Link>
                 <Link href="/products" className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${pathname === "/products" ? "text-primary bg-primary/5" : "text-gray-700 hover:text-primary hover:bg-gray-50"}`}>
                   Products
                 </Link>

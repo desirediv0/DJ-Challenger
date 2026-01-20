@@ -51,7 +51,7 @@ export const Footer = () => {
                 alt="DJ-Challenger"
                 width={120}
                 height={50}
-                className="h-12 w-auto brightness-0 invert"
+                className="h-20 w-auto brightness-0 invert"
               />
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-sm">
@@ -168,10 +168,6 @@ export const Footer = () => {
           <div className="flex flex-col md:flex-row items-center gap-2">
             <p className="text-gray-500 text-sm">
               © {new Date().getFullYear()} DJ-Challenger. All rights reserved.
-            </p>
-            <span className="hidden md:inline text-gray-700">|</span>
-            <p className="text-gray-500 text-sm">
-              Designed by <a href="https://desirediv.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Desire Div</a>
             </p>
           </div>
           

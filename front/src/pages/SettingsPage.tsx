@@ -3,10 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
     Monitor,
-    Smartphone,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { toast } from "sonner";
@@ -16,8 +14,6 @@ function LanguageManagement() {
     const { language, setLanguage, t } = useLanguage();
     // Local state for admin language selection
     const [selectedAdminLanguage, setSelectedAdminLanguage] = useState(language);
-    // For client languages, we'll keep local state for now as placeholder for DB integration
-    const [clientLanguages, setClientLanguages] = useState(["en"]);
 
     // Update local state when global state changes (e.g. initial load)
     // but only if user hasn't interacted yet (or we can just respect global always on load)
@@ -36,13 +32,6 @@ function LanguageManagement() {
         { code: "ar", name: "Arabic", flag: "🇸🇦" },
     ];
 
-    const handleClientLanguageChange = (languageCode: string, checked: boolean | string): void => {
-        if (checked) {
-            setClientLanguages((prev: string[]) => [...prev, languageCode]);
-        } else {
-            setClientLanguages((prev: string[]) => prev.filter((code: string) => code !== languageCode));
-        }
-    };
 
     const handleSave = async () => {
 
@@ -102,9 +91,9 @@ function LanguageManagement() {
                     </div>
                 </CardContent>
             </Card>
-
+            {/* 
             {/* Client Website Language */}
-            <Card className="bg-[#F9FAFB] border-[#E5E7EB]">
+            {/* <Card className="bg-[#F9FAFB] border-[#E5E7EB]">
                 <CardHeader className="pb-4">
                     <CardTitle className="text-lg font-semibold text-[#1F2937] flex items-center gap-2">
                         <Smartphone className="h-5 w-5 text-[#2196F3]" />
@@ -152,7 +141,7 @@ function LanguageManagement() {
                         </div>
                     </div>
                 </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Save Button */}
             <div className="flex justify-end">
