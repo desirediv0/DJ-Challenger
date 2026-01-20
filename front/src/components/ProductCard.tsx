@@ -275,74 +275,77 @@ export function ProductCard({
         </Button>
       </div>
 
-      <CardContent className="p-4 flex-grow">
+      <CardContent className="p-2 flex-grow">
         <Link to={`/products/${slug}`} className="hover:underline">
-          <h3 className="font-semibold text-lg mb-1 line-clamp-1">{name}</h3>
+          <h3 className="font-semibold text-base mb-0.5 line-clamp-1">{name}</h3>
         </Link>
 
         {/* Display variant name if it's not a simple product */}
         {!isSimpleProduct(variants) && selectedVariant && (
-          <div className="text-xs text-muted-foreground mb-1">
+          <div className="text-xs text-muted-foreground mb-0.5">
             {getVariantDisplayName(selectedVariant)}
           </div>
         )}
 
-        <div className="flex items-center mb-2">
+        <div className="flex items-center mb-1">
           <div className="flex items-center">
-            <Star className="h-4 w-4 text-yellow-400 mr-1" />
-            <span className="text-sm">{averageRating.toFixed(1)}</span>
+            <Star className="h-3 w-3 text-yellow-400 mr-0.5" />
+            <span className="text-xs">{averageRating.toFixed(1)}</span>
           </div>
-          <span className="text-sm text-muted-foreground ml-2">
-            ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+          <span className="text-xs text-muted-foreground ml-1">
+            ({reviewCount})
           </span>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-          {truncateDescription(description)}
+        <p className="text-xs text-muted-foreground mb-1.5 line-clamp-2">
+          {truncateDescription(description, 60)}
         </p>
 
-        <div className="mb-2">
-          <div className="font-medium">
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-medium text-sm min-w-0 flex-shrink">
             {priceVisibilitySettings?.hidePricesForGuests && !isAuthenticated ? (
-              // Hide prices for non-authenticated users when setting is enabled
-              <span className="text-base text-gray-400">
-                Login to view price
+              <span className="text-xs text-gray-400">
+                Login to view
               </span>
             ) : selectedVariant.salePrice ? (
-              <div className="flex items-center gap-2">
-                <span className="text-red-500">
-                  {formatPrice(selectedVariant.salePrice)}
+              <div className="flex flex-col">
+                <span className="text-orange-500 font-bold text-sm">
+                  ₹{selectedVariant.salePrice.toLocaleString('en-IN')}
                 </span>
-                <span className="text-muted-foreground line-through text-sm">
-                  {formatPrice(selectedVariant.price)}
+                <span className="text-muted-foreground line-through text-xs">
+                  ₹{selectedVariant.price.toLocaleString('en-IN')}
                 </span>
               </div>
             ) : (
-              <span>{formatPrice(selectedVariant.price)}</span>
+              <span className="text-sm font-bold">₹{selectedVariant.price.toLocaleString('en-IN')}</span>
             )}
           </div>
 
-          {variants.length > 1 && (
-            <div className="text-xs text-muted-foreground mt-1">
-              {variants.length} variants available
-            </div>
-          )}
+          <Button
+            size="sm"
+            className="h-8 px-3 text-xs flex-shrink-0"
+            onClick={handleAddToCart}
+            disabled={addingToCart || selectedVariant.quantity <= 0}
+          >
+            {addingToCart ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <>
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                Add
+              </>
+            )}
+          </Button>
         </div>
+
+        {variants.length > 1 && (
+          <div className="text-xs text-muted-foreground mt-1">
+            {variants.length} options
+          </div>
+        )}
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex gap-2">
-        <Button
-          className="w-full"
-          onClick={handleAddToCart}
-          disabled={addingToCart || selectedVariant.quantity <= 0}
-        >
-          {addingToCart ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <ShoppingCart className="h-4 w-4 mr-2" />
-          )}
-          {selectedVariant.quantity <= 0 ? "Out of Stock" : "Add to Cart"}
-        </Button>
+      <CardFooter className="p-2 pt-0 hidden">
       </CardFooter>
     </Card>
   );

@@ -322,133 +322,109 @@ export const ProductCard = ({ product }) => {
 
   return (
     <div
-      className="group relative bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 border border-gray-100 hover:border-primary/20 h-full flex flex-col"
+      className="group relative bg-white rounded-md overflow-hidden transition-all duration-300 hover:shadow-md border border-gray-200 h-full flex flex-col"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Product Image Area */}
-      <Link href={`/products/${product.slug}`} className="block relative aspect-square overflow-hidden bg-gray-50">
+      {/* Product Image */}
+      <Link href={`/products/${product.slug}`} className="block relative aspect-[4/3] overflow-hidden bg-gray-100">
         
         {/* Wishlist Button */}
         <button
           onClick={handleAddToWishlist}
           disabled={isAddingToWishlist[product.id]}
-          className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white text-gray-400 hover:text-red-500 transition-all duration-200 transform hover:scale-110"
+          className="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-white/90 shadow-sm hover:bg-white text-gray-500 hover:text-red-500 transition-colors"
         >
           {isAddingToWishlist[product.id] ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Heart
-              className={`h-5 w-5 ${wishlistItems[product.id] ? "fill-red-500 text-red-500" : ""}`}
-            />
+            <Heart className={`h-4 w-4 ${wishlistItems[product.id] ? "fill-red-500 text-red-500" : ""}`} />
           )}
         </button>
 
-        {/* Badges: Category & Discount */}
-        <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
-            {/* Category Badge */}
-            {product.category && (
-                <span className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-xs font-semibold text-gray-800 rounded-md shadow-sm border border-gray-100 uppercase tracking-wide w-fit">
-                    {typeof product.category === 'object' ? product.category.name : product.category}
-                </span>
-            )}
-            {/* Flash Sale Badge */}
-            {showFlashSaleBadge && discountPercent > 0 && (
-                <div className="px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-md shadow-lg w-fit animate-pulse flex items-center gap-1">
-                    <span>⚡</span> {discountPercent}% OFF
-                </div>
-            )}
-            {/* Regular Sale Badge (only if not flash sale) */}
-            {!showFlashSaleBadge && hasSale && discountPercent > 0 && (
-                <div className="px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-md shadow-sm w-fit animate-pulse">
-                    {discountPercent}% OFF
-                </div>
-            )}
-        </div>
-
-        {/* Main Image with Hover Rotation */}
-        <div className="relative w-full h-full">
-            <Image
-                src={getAllProductImages[currentImageIndex] || "/placeholder.jpg"}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-        </div>
-
-        {/* Image Dots Indicator (if multiple) */}
-        {getAllProductImages.length > 1 && isHovered && (
-             <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-20">
-                {getAllProductImages.map((_, idx) => (
-                    <div 
-                        key={idx}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentImageIndex ? "w-4 bg-primary" : "w-1.5 bg-white/60"}`}
-                    />
-                ))}
-             </div>
+        {/* Discount Badge */}
+        {(showFlashSaleBadge || hasSale) && discountPercent > 0 && (
+          <div className={`absolute top-2 left-2 z-20 px-2 py-0.5 text-white text-xs font-bold rounded ${showFlashSaleBadge ? 'bg-orange-500' : 'bg-red-500'}`}>
+            {discountPercent}% OFF
+          </div>
         )}
-        
-        {/* Overlay gradient on hover */}
-        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+        {/* Image */}
+        <Image
+          src={getAllProductImages[currentImageIndex] || "/placeholder.jpg"}
+          alt={product.name}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
+
+        {/* Image dots */}
+        {getAllProductImages.length > 1 && isHovered && (
+          <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1 z-20">
+            {getAllProductImages.map((_, idx) => (
+              <div key={idx} className={`h-1 rounded-full transition-all ${idx === currentImageIndex ? "w-3 bg-white" : "w-1 bg-white/50"}`} />
+            ))}
+          </div>
+        )}
       </Link>
 
-      {/* Product Details */}
-      <div className="p-4 flex flex-col flex-grow">
-        <Link href={`/products/${product.slug}`} className="block">
-            <h3 className="font-medium text-gray-900 text-lg mb-1 line-clamp-1 group-hover:text-primary transition-colors" title={product.name}>
-                {product.name}
-            </h3>
+      {/* Product Info */}
+      <div className="p-2.5 flex flex-col flex-grow">
+        {/* Name */}
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 hover:text-primary transition-colors mb-1.5">
+            {product.name}
+          </h3>
         </Link>
-        
-        <div className="flex items-center gap-2 mb-2 text-sm text-gray-500">
-             <div className="flex items-center text-yellow-500">
-               
-                <span className="ml-1 font-medium text-gray-700">
-                    {product.avgRating && product.avgRating}
-                </span>
-             </div>
-        </div>
 
-          <div className="mt-auto pt-3 flex items-center justify-between gap-2 border-t border-gray-50">
-            <div className="flex flex-col min-w-0">
-               {showPrice ? (
-                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
-                       <span className={`text-lg font-bold truncate ${showFlashSaleBadge ? 'text-orange-600' : 'text-primary'}`}>
-                           {formatCurrency(displayPrice)}
-                       </span>
-                       {(hasSale || showFlashSaleBadge) && originalPrice && (
-                           <span className="text-xs text-gray-400 line-through decoration-gray-400 truncate">
-                               {formatCurrency(originalPrice)}
-                           </span>
-                       )}
-                   </div>
-               ) : (
-                  <Link href="/auth?redirect=products" className="text-sm font-medium text-primary hover:underline truncate">
-                      Login to view price
-                  </Link>
-               )}
-            </div>
-
-            {/* Add to Cart Button */}
-            <Button
-              size="sm"
-              onClick={handleAddToCart}
-              disabled={!showPrice || isAddingToCart}
-              className={`flex-shrink-0 rounded-full shadow-sm hover:shadow-md transition-all duration-300 px-3 h-9 ${!showPrice ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {isAddingToCart ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                  <>
-                      {/* Icon only on small screens, Text on larger if space permits - or just keep it simple */}
-                      <ShoppingBag className="h-4 w-4" />
-                      <span className="ml-1.5 hidden sm:inline-block">Add</span>
-                  </>
-              )}
-            </Button>
+        {/* Rating */}
+        {product.avgRating && (
+          <div className="flex items-center gap-0.5 text-xs text-gray-500 mb-1.5">
+            <span className="text-yellow-500">★</span>
+            <span>{product.avgRating}</span>
           </div>
+        )}
+
+        {/* Price + Add Button Row */}
+        <div className="mt-auto flex items-center justify-between gap-1.5">
+          {/* Price */}
+          <div className="min-w-0">
+            {showPrice ? (
+              <>
+                <div className={`text-sm font-bold ${showFlashSaleBadge ? 'text-orange-600' : 'text-gray-900'}`}>
+                  {formatCurrency(displayPrice)}
+                </div>
+                {(hasSale || showFlashSaleBadge) && originalPrice && (
+                  <div className="text-xs text-gray-400 line-through">
+                    {formatCurrency(originalPrice)}
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link href="/auth?redirect=products" className="text-xs text-primary hover:underline">
+                Login
+              </Link>
+            )}
+          </div>
+
+          {/* Add Button */}
+          <Button
+            size="sm"
+            onClick={handleAddToCart}
+            disabled={!showPrice || isAddingToCart}
+            className="h-8 px-2.5 text-xs rounded-md flex-shrink-0"
+          >
+            {isAddingToCart ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <>
+                <ShoppingBag className="h-3.5 w-3.5" />
+                <span className="ml-1 hidden xs:inline">Add</span>
+              </>
+            )}
+          </Button>
         </div>
       </div>
+    </div>
   );
 };
