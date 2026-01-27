@@ -1,14 +1,10 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail,  MapPin, Facebook, Instagram, Youtube } from "lucide-react";
-
-const shopLinks = [
-  { name: "All Products", href: "/products" },
-  { name: "DJ Speakers", href: "/products?category=dj-speakers" },
-  { name: "Amplifiers", href: "/products?category=amplifiers" },
-  { name: "PA Systems", href: "/products?category=pa-series" },
-  { name: "Trolley Speakers", href: "/products?category=trolley-speakers" },
-];
+import { Mail, MapPin, Facebook, Instagram, Youtube } from "lucide-react";
+import { fetchApi } from "@/lib/utils";
 
 const companyLinks = [
   { name: "About Us", href: "/about" },
@@ -38,6 +34,26 @@ const socialLinks = [
 ];
 
 export const Footer = () => {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetchApi("/public/categories");
+        const fetchedCategories = response.data?.categories || [];
+        // Limit to top 8 categories for the footer
+        setCategories(fetchedCategories.slice(0, 8));
+      } catch (error) {
+        console.error("Error fetching categories for footer:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4">
@@ -81,16 +97,45 @@ export const Footer = () => {
               Shop
             </h3>
             <ul className="space-y-3">
-              {shopLinks.map((link) => (
-                <li key={link.name}>
+              {loading ? (
+                // Loading skeleton for links
+                <>
+                  <li className="h-4 w-24 bg-white/10 rounded animate-pulse"></li>
+                  <li className="h-4 w-20 bg-white/10 rounded animate-pulse"></li>
+                  <li className="h-4 w-28 bg-white/10 rounded animate-pulse"></li>
+                </>
+              ) : categories.length > 0 ? (
+                categories.map((category) => (
+                  <li key={category.id}>
+                    <Link
+                      href={`/category/${category.slug}`}
+                      className="text-gray-400 hover:text-primary text-sm transition-colors block"
+                    >
+                      {category.name}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <li>
                   <Link
-                    href={link.href}
+                    href="/products"
                     className="text-gray-400 hover:text-primary text-sm transition-colors"
                   >
-                    {link.name}
+                    All Products
                   </Link>
                 </li>
-              ))}
+              )}
+              {/* Always show View All Categories link at the end if we have categories */}
+              {categories.length > 0 && (
+                <li>
+                  <Link
+                    href="/categories"
+                    className="text-gray-400 hover:text-primary text-sm transition-colors block font-medium mt-2"
+                  >
+                    View All Categories
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 

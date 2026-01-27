@@ -85,7 +85,7 @@ export default function CategoriesCarousel() {
                   src={getImageUrl(category.image)}
                   alt={category.name}
                   fill
-                  className="object-contain p-3 transition-transform group-hover/item:scale-110"
+                  className="object-contain transition-transform group-hover/item:scale-110"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

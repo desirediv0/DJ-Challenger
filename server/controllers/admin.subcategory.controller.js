@@ -118,7 +118,7 @@ export const createSubCategory = asyncHandler(async (req, res, next) => {
   });
 
   if (existingSubCategory) {
-    throw new ApiError(400, "Sub-category with this name already exists");
+    throw new ApiError(409, "Sub-category with this name already exists in this category");
   }
 
   // Handle image upload if provided
@@ -191,7 +191,7 @@ export const updateSubCategory = asyncHandler(async (req, res, next) => {
     });
 
     if (slugExists && slugExists.id !== id) {
-      throw new ApiError(400, "Sub-category with this name already exists");
+      throw new ApiError(409, "Sub-category with this name already exists in this category");
     }
   }
 

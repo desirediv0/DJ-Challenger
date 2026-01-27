@@ -26,8 +26,8 @@ const fallbackSlides = [
     subheadline: "For Every Stage",
     description:
       "From intimate venues to massive events - we have you covered",
-    desktopImage: "/hero-slide-2.png",
-    mobileImage: "/hero-slide-2.png",
+    desktopImage: "/hero-slide-2.jpg",
+    mobileImage: "/hero-slide-2.jpg",
     gradient: "from-black/70 via-black/50 to-transparent",
     link: "/products",
   },

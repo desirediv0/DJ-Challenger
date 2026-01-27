@@ -327,7 +327,7 @@ export const ProductCard = ({ product }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Product Image */}
-      <Link href={`/products/${product.slug}`} className="block relative aspect-[4/3] overflow-hidden bg-gray-100">
+      <Link href={`/products/${product.slug}`} className="block relative aspect-[4/4] overflow-hidden bg-gray-100">
         
         {/* Wishlist Button */}
         <button
@@ -354,8 +354,8 @@ export const ProductCard = ({ product }) => {
           src={getAllProductImages[currentImageIndex] || "/placeholder.jpg"}
           alt={product.name}
           fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover transition-transform duration-500"
+          sizes="(max-width: 640px) 30vw, (max-width: 1024px) 25vw, 15vw"
         />
 
         {/* Image dots */}

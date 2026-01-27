@@ -751,9 +751,13 @@ function CategoryForm({
       }
     } catch (error: any) {
       console.error("Error saving sub-category:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to save sub-category"
-      );
+      if (error.response?.status === 409) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(
+          error.response?.data?.message || "Failed to save sub-category"
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -830,7 +834,11 @@ function CategoryForm({
       }
     } catch (error: any) {
       console.error("Error saving category:", error);
-      toast.error(error.response?.data?.message || t(mode === "edit" ? "categories.messages.update_error" : "categories.messages.create_error"));
+      if (error.response?.status === 409) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.response?.data?.message || t(mode === "edit" ? "categories.messages.update_error" : "categories.messages.create_error"));
+      }
     } finally {
       setIsLoading(false);
     }

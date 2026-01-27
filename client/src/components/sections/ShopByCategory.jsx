@@ -23,7 +23,7 @@ const categories = [
     name: "PA Series",
     slug: "pa-series",
     description: "Public address systems",
-    image: "/hero-slide-2.png",
+    image: "/hero-slide-2.jpg",
     products: "20+ Products"
   },
   {

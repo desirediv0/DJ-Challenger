@@ -219,6 +219,11 @@ function RegisterForm() {
             return false;
         }
 
+        if (!formData.phone || formData.phone.length < 10) {
+            toast.error("Please enter a valid phone number");
+            return false;
+        }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
             toast.error("Please enter a valid email address");
@@ -308,7 +313,7 @@ function RegisterForm() {
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Phone (Optional)</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Phone</label>
                 <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <input
@@ -316,6 +321,7 @@ function RegisterForm() {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
+                        required
                         placeholder="+91 9876543210"
                         className="w-full pl-11 pr-4 py-3 border border-input rounded-xl bg-background focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                     />

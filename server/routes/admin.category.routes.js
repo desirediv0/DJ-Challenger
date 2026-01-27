@@ -136,9 +136,9 @@ router.post(
       });
 
       if (existingCategory) {
-        return res.status(400).json({
+        return res.status(409).json({
           success: false,
-          message: "A category with this name already exists",
+          message: "A category with this name or slug already exists",
         });
       }
 
@@ -247,9 +247,9 @@ router.patch(
         });
 
         if (duplicateCategory) {
-          return res.status(400).json({
+          return res.status(409).json({
             success: false,
-            message: "A category with this name already exists",
+            message: "A category with this name or slug already exists",
           });
         }
 

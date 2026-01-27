@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchApi } from "@/lib/utils";
-import { AlertCircle, ArrowRight, Volume2, Headphones, Zap } from "lucide-react";
+import { AlertCircle, ArrowRight, Volume2, Headphones, Zap, Image as ImageIcon } from "lucide-react";
 
 const getImageUrl = (image) => {
     if (!image) return "/placeholder.jpg";
@@ -20,12 +20,18 @@ const CategoryCard = ({ category, index }) => {
                 <div className="relative bg-white rounded-2xl overflow-hidden border border-gray-200 hover:border-primary/30 transition-all duration-300 h-full hover:shadow-lg">
                     {/* Image */}
                     <div className="relative h-44 w-full overflow-hidden bg-gray-50">
-                        <Image
-                            src={category.image ? getImageUrl(category.image) : "/placeholder.jpg"}
-                            alt={category.name}
-                            fill
-                            className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
-                        />
+                        {category.image ? (
+                            <Image
+                                src={getImageUrl(category.image)}
+                                alt={category.name}
+                                fill
+                                className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                                <ImageIcon className="w-16 h-16 text-gray-300 group-hover:text-primary/50 transition-colors" />
+                            </div>
+                        )}
 
                         {/* Product count badge */}
                         <div className="absolute top-3 right-3 bg-primary text-white px-2.5 py-1 rounded-full text-xs font-bold">
