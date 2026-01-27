@@ -51,6 +51,7 @@ function ProductsContent() {
     const maxPrice = searchParams.get("maxPrice") || "";
     const sortParam = searchParams.get("sort") || "createdAt";
     const orderParam = searchParams.get("order") || "desc";
+    const pageParam = parseInt(searchParams.get("page")) || 1;
 
     // Determine which section should be open based on URL params
     const getInitialActiveSection = () => {
@@ -97,7 +98,7 @@ function ProductsContent() {
     }, [filters.search]);
 
     const [pagination, setPagination] = useState({
-        page: 1,
+        page: pageParam,
         limit: 20,
         total: 0,
         pages: 0,
@@ -477,6 +478,16 @@ function ProductsContent() {
     const handlePageChange = (newPage) => {
         if (newPage < 1 || newPage > pagination.pages) return;
         setPagination((prev) => ({ ...prev, page: newPage }));
+
+        // Update URL
+        const params = new URLSearchParams(searchParams.toString());
+        if (newPage > 1) {
+            params.set("page", newPage.toString());
+        } else {
+            params.delete("page");
+        }
+        router.push(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+
         scrollToTop();
     };
 
@@ -788,7 +799,7 @@ function ProductsContent() {
                                         const page = i + 1;
                                         if (page === 1 || page === pagination.pages || (page >= pagination.page - 1 && page <= pagination.page + 1)) {
                                             return (
-                                                <button key={page} onClick={() => handlePageChange(page)} disabled={loading} className={`px-3 py-2 text-sm ${pagination.page === page ? "bg-[primary] text-white" : "bg-white text-gray-700 hover:bg-gray-100"}`}>
+                                                <button key={page} onClick={() => handlePageChange(page)} disabled={loading} className={`px-3 py-2 text-sm ${pagination.page === page ? "bg-primary text-primary-foreground font-medium" : "bg-white text-gray-700 hover:bg-gray-100"}`}>
                                                     {page}
                                                 </button>
                                             );
