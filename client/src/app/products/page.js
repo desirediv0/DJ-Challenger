@@ -779,8 +779,8 @@ function ProductsContent() {
                         {/* Pagination */}
                         {pagination.pages > 1 && (
                             <div className="flex justify-center items-center mt-10 mb-4">
-                                <div className="inline-flex items-center rounded-md overflow-hidden border divide-x">
-                                    <Button variant="ghost" size="sm" onClick={() => handlePageChange(pagination.page - 1)} disabled={pagination.page === 1 || loading} className="rounded-none border-0 hover:bg-gray-100 hover:text-black">
+                                <div className="inline-flex items-center rounded-md overflow-hidden border divide-x bg-white">
+                                    <Button variant="ghost" size="sm" onClick={() => handlePageChange(pagination.page - 1)} disabled={pagination.page === 1 || loading} className="rounded-none border-0 hover:bg-gray-100 hover:text-black text-gray-700">
                                         <ChevronDown className="h-4 w-4 rotate-90" />
                                     </Button>
 
@@ -788,20 +788,20 @@ function ProductsContent() {
                                         const page = i + 1;
                                         if (page === 1 || page === pagination.pages || (page >= pagination.page - 1 && page <= pagination.page + 1)) {
                                             return (
-                                                <button key={page} onClick={() => handlePageChange(page)} disabled={loading} className={`px-3 py-2 text-sm ${pagination.page === page ? "bg-[primary] text-white" : "hover:bg-gray-100"}`}>
+                                                <button key={page} onClick={() => handlePageChange(page)} disabled={loading} className={`px-3 py-2 text-sm ${pagination.page === page ? "bg-[primary] text-white" : "bg-white text-gray-700 hover:bg-gray-100"}`}>
                                                     {page}
                                                 </button>
                                             );
                                         }
 
                                         if ((page === 2 && pagination.page > 3) || (page === pagination.pages - 1 && pagination.page < pagination.pages - 2)) {
-                                            return (<span key={page} className="px-3 py-2">...</span>);
+                                            return (<span key={page} className="px-3 py-2 text-gray-500 bg-white">...</span>);
                                         }
 
                                         return null;
                                     })}
 
-                                    <Button variant="ghost" size="sm" onClick={() => handlePageChange(pagination.page + 1)} disabled={pagination.page === pagination.pages || loading} className="rounded-none border-0 hover:bg-gray-100 hover:text-black">
+                                    <Button variant="ghost" size="sm" onClick={() => handlePageChange(pagination.page + 1)} disabled={pagination.page === pagination.pages || loading} className="rounded-none border-0 hover:bg-gray-100 hover:text-black text-gray-700">
                                         <ChevronUp className="h-4 w-4 rotate-90" />
                                     </Button>
                                 </div>
