@@ -84,8 +84,16 @@ export default function ContactPage() {
                             <MapPin className="h-6 w-6 text-primary" />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900 mb-1">Visit Us</h3>
-                        <p className="text-gray-700 font-medium mb-1">Industrial Area, Delhi NCR</p>
-                        <p className="text-gray-500 text-sm">India - 110001</p>
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-primary font-semibold text-sm">Head Office</p>
+                                <p className="text-gray-600 text-sm">Rome Italy - 00121</p>
+                            </div>
+                            <div>
+                                <p className="text-primary font-semibold text-sm">Regional Office</p>
+                                <p className="text-gray-600 text-sm">Delhi NCR - Uttar Pradesh - 201102</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

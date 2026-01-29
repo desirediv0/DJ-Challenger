@@ -182,9 +182,16 @@ export const Footer = () => {
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span className="text-gray-400 text-sm">
-                  Industrial Area, Delhi NCR
-                </span>
+                <div className="text-gray-400 text-sm space-y-2">
+                  <div>
+                    <span className="font-medium text-white block">Head Office:</span>
+                    Rome Italy - 00121
+                  </div>
+                  <div>
+                    <span className="font-medium text-white block">Regional Office:</span>
+                    Delhi NCR - Uttar Pradesh - 201102
+                  </div>
+                </div>
               </li>
             </ul>
 
