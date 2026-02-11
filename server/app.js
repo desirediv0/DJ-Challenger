@@ -43,8 +43,8 @@ const app = express();
 
 /* -------------------- BASIC MIDDLEWARE -------------------- */
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 app.use(cookieParser());
 
 /* -------------------- REQUEST LOGGER -------------------- */
