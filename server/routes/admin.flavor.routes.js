@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import s3client from "../utils/s3client.js";
 import { deleteFromS3, getFileUrl } from "../utils/deleteFromS3.js";
-import { isAdmin, hasPermission } from "../middlewares/auth.middleware.js";
+import { isAdmin } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 // using shared `prisma` from `config/db.js`
@@ -124,7 +124,7 @@ router.post("/flavors", isAdmin, upload.single("image"), async (req, res) => {
     // Upload image to S3 if provided
     if (req.file) {
       // Use the upload folder from environment variable for consistency
-      const uploadFolder = process.env.UPLOAD_FOLDER || "ecom-uploads";
+      const uploadFolder = process.env.UPLOAD_FOLDER || "djchallenger";
       imageKey = `${uploadFolder}/flavors/${uuidv4()}-${req.file.originalname.replace(
         /\s+/g,
         "-"
@@ -225,7 +225,7 @@ router.patch(
         }
 
         // Upload new image using the environment variable
-        const uploadFolder = process.env.UPLOAD_FOLDER || "ecom-uploads";
+        const uploadFolder = process.env.UPLOAD_FOLDER || "djchallenger";
         imageKey = `${uploadFolder}/flavors/${uuidv4()}-${req.file.originalname.replace(
           /\s+/g,
           "-"

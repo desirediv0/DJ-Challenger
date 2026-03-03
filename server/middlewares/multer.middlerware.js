@@ -33,19 +33,15 @@ export const processAndUploadImage = async (file, subfolder = "images") => {
     const fileExtension = originalname.split(".").pop().toLowerCase();
 
     // Use UPLOAD_FOLDER from environment variables for consistency
-    const uploadFolder = process.env.UPLOAD_FOLDER || "ecom-uploads";
+    const uploadFolder = process.env.UPLOAD_FOLDER || "djchallenger";
     const filename = `${uploadFolder}/${subfolder}/${timestamp}-${sanitizedName}`;
 
     console.log(`🔧 Target filename: ${filename}`);
 
-    // Process image with sharp to optimize
-    console.log(`🔧 Starting Sharp processing...`);
-    const processedBuffer = await sharp(buffer)
-      .resize(1200, null, { withoutEnlargement: true })
-      .toBuffer();
-
+    // No compression requested: Use the original buffer
+    const processedBuffer = buffer;
     console.log(
-      `🔧 Sharp processing complete. Processed size: ${processedBuffer.length} bytes`
+      `🔧 Using original image buffer. Size: ${processedBuffer.length} bytes`
     );
 
     // Upload to S3 with proper content type
@@ -55,13 +51,12 @@ export const processAndUploadImage = async (file, subfolder = "images") => {
       Key: filename,
       Body: processedBuffer,
       ACL: "public-read",
-      ContentType: `image/${
-        fileExtension === "png"
-          ? "png"
-          : fileExtension === "gif"
+      ContentType: `image/${fileExtension === "png"
+        ? "png"
+        : fileExtension === "gif"
           ? "gif"
           : "jpeg"
-      }`,
+        }`,
     });
 
     await s3client.send(putCommand);
@@ -85,7 +80,7 @@ export const uploadPDF = async (file) => {
   const { originalname, buffer, mimetype } = file;
 
   // Use UPLOAD_FOLDER from environment variables
-  const uploadFolder = process.env.UPLOAD_FOLDER || "ecom-uploads";
+  const uploadFolder = process.env.UPLOAD_FOLDER || "djchallenger";
   const filename = `${uploadFolder}/pdfs/${Date.now()}-${originalname
     .toLowerCase()
     .split(" ")
@@ -114,7 +109,7 @@ export const uploadAudio = async (file) => {
   const { originalname, buffer, mimetype } = file;
 
   // Use UPLOAD_FOLDER from environment variables
-  const uploadFolder = process.env.UPLOAD_FOLDER || "ecom-uploads";
+  const uploadFolder = process.env.UPLOAD_FOLDER || "djchallenger";
   const filename = `${uploadFolder}/audio/${Date.now()}-${originalname
     .toLowerCase()
     .split(" ")
