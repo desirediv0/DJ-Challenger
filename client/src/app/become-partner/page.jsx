@@ -133,7 +133,7 @@ export default function BecomePartnerPage() {
   return (
     <>
       {/* Google Font */}
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
         .partner-root { font-family: 'DM Sans', sans-serif; }
@@ -246,7 +246,7 @@ export default function BecomePartnerPage() {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-      `}</style>
+      `}} />
 
       <div className="partner-root min-h-screen bg-[#f8f7f4]">
 

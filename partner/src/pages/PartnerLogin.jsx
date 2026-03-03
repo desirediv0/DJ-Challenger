@@ -247,7 +247,7 @@ const PartnerLogin = () => {
                         <div className="mt-4 text-center text-sm">
                             <span className="text-gray-500">{t('become_partner')} </span>
                             <a
-                                href="http://localhost:3000/become-partner"
+                                href="https://djchallenger.in/become-partner"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[#DE7A3E] hover:underline font-medium"
