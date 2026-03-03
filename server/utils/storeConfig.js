@@ -32,7 +32,7 @@ export const getStoreConfig = () => {
     supportEmail:
       process.env.SUPPORT_EMAIL ||
       process.env.STORE_EMAIL ||
-      "DjChallengerIndia@gmail.com",
+      "Info@djchallenger.in",
 
     // Social Media (optional)
     socialFacebook: process.env.SOCIAL_FACEBOOK || "",

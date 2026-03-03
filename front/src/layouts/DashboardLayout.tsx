@@ -464,14 +464,14 @@ export default function DashboardLayout() {
                       Action.READ
                     ),
                   },
-                  // {
-                  //   href: "/partner",
-                  //   title: t("nav.partners"),
-                  //   icon: <Users className="h-3 w-3" />,
-                  //   hasPermission:
-                  //     admin?.role === "SUPER_ADMIN" ||
-                  //     hasPermissionFor(admin, Resource.USERS, Action.READ),
-                  // },
+                  {
+                    href: "/partner",
+                    title: t("nav.partners"),
+                    icon: <Users className="h-3 w-3" />,
+                    hasPermission:
+                      admin?.role === "SUPER_ADMIN" ||
+                      hasPermissionFor(admin, Resource.USERS, Action.READ),
+                  },
                   // {
                   //   href: "/referrals",
                   //   title: t("nav.referrals"),
@@ -836,14 +836,14 @@ export default function DashboardLayout() {
                       Action.READ
                     ),
                   },
-                  // {
-                  //   href: "/partner",
-                  //   title: t("nav.partners"),
-                  //   icon: <Users className="h-3 w-3" />,
-                  //   hasPermission:
-                  //     admin?.role === "SUPER_ADMIN" ||
-                  //     hasPermissionFor(admin, Resource.USERS, Action.READ),
-                  // },
+                  {
+                    href: "/partner",
+                    title: t("nav.partners"),
+                    icon: <Users className="h-3 w-3" />,
+                    hasPermission:
+                      admin?.role === "SUPER_ADMIN" ||
+                      hasPermissionFor(admin, Resource.USERS, Action.READ),
+                  },
                   // {
                   //   href: "/referrals",
                   //   title: t("nav.referrals"),

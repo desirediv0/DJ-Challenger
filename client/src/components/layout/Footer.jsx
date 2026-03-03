@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, MapPin, Facebook, Instagram, Youtube } from "lucide-react";
+import { Mail, MapPin, Facebook, Instagram, Youtube, Handshake } from "lucide-react";
 import { fetchApi } from "@/lib/utils";
 
 const companyLinks = [
@@ -11,6 +11,8 @@ const companyLinks = [
   { name: "Categories", href: "/categories" },
   { name: "Contact", href: "/contact" },
 ];
+
+const PARTNER_PORTAL_URL = process.env.NEXT_PUBLIC_PARTNER_URL || 'http://localhost:5000';
 
 const socialLinks = [
   { 
@@ -58,7 +60,7 @@ export const Footer = () => {
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4">
         {/* Main Footer */}
-        <div className="py-12 md:py-16 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+        <div className="py-12 md:py-16 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
           {/* Brand */}
           <div className="col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-3 mb-5">
@@ -168,6 +170,38 @@ export const Footer = () => {
             </ul>
           </div>
 
+          {/* Partner Program */}
+          <div>
+            <h3 className="font-bold text-sm uppercase tracking-wider mb-5 text-white">
+              Partner Program
+            </h3>
+            <ul className="space-y-3">
+              <li>
+                <Link
+                  href="/become-partner"
+                  className="group relative inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 text-sm font-medium transition-colors"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                  </span>
+                  Become a Partner
+                </Link>
+              </li>
+              <li>
+                <a
+                  href={PARTNER_PORTAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-primary text-sm transition-colors flex items-center gap-1.5"
+                >
+                  <Handshake className="h-3.5 w-3.5" />
+                  Partner Login
+                </a>
+              </li>
+            </ul>
+          </div>
+
           {/* Contact */}
           <div>
             <h3 className="font-bold text-sm uppercase tracking-wider mb-5 text-white">
@@ -176,8 +210,8 @@ export const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Mail className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <a href="mailto:DjChallengerIndia@gmail.com" className="text-gray-400 hover:text-white text-sm transition-colors break-all">
-                  DjChallengerIndia@gmail.com
+                <a href="mailto:Info@djchallenger.in" className="text-gray-400 hover:text-white text-sm transition-colors break-all">
+                  Info@djchallenger.in
                 </a>
               </li>
               <li className="flex items-start gap-3">

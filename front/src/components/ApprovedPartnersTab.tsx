@@ -12,6 +12,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+type LastMonthPayment = {
+    status: string;
+    totalAmount?: number;
+    paidAt?: string | null;
+    monthlyEarningId?: string | null;
+};
+
 type ApprovedPartner = {
     id: string;
     name: string;
@@ -21,7 +28,7 @@ type ApprovedPartner = {
     monthlyEarnings: number;
     totalEarnings: number;
     registeredAt: string;
-    message?: string; // Added message field
+    message?: string;
     coupons: Array<{
         id: string;
         code: string;
@@ -31,6 +38,7 @@ type ApprovedPartner = {
         total: number;
         monthly: Record<string, number>;
     };
+    lastMonthPayment?: LastMonthPayment;
 };
 
 export default function ApprovedPartnersTab() {
@@ -134,51 +142,63 @@ export default function ApprovedPartnersTab() {
                         <TableHead>{t("partners_tab.common.number")}</TableHead>
                         <TableHead>{t("partners_tab.common.status")}</TableHead>
                         <TableHead>{t("partners_tab.common.monthly_earnings")}</TableHead>
+                        <TableHead>Last month payment</TableHead>
                         <TableHead>{t("partners_tab.common.actions")}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {partners.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                 {t("partners_tab.approved.no_partners")}
                             </TableCell>
                         </TableRow>
                     ) : (
-                        partners.map((partner) => (
-                            <TableRow key={partner.id}>
-                                <TableCell>{partner.name}</TableCell>
-                                <TableCell>{partner.email}</TableCell>
-                                <TableCell>{partner.number}</TableCell>
-                                <TableCell>
-                                    <Badge variant="default">{t("partners_tab.approved.active")}</Badge>
-                                </TableCell>
-                                <TableCell>₹{partner.monthlyEarnings?.toFixed(2) || '0.00'}</TableCell>
-                                <TableCell>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            asChild
-                                        >
-                                            <Link to={`/partners/${partner.id}`}>
-                                                <Eye className="h-4 w-4 mr-1" />
-                                                {t("reviews.actions.view")}
-                                            </Link>
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            onClick={() => handleRemovePartner(partner.id)}
-                                            disabled={removingPartnerId === partner.id}
-                                        >
-                                            <UserMinus className="h-4 w-4 mr-1" />
-                                            {removingPartnerId === partner.id ? t("partners_tab.approved.removing") : t("partners_tab.approved.remove")}
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))
+                        partners.map((partner) => {
+                            const lastPay = partner.lastMonthPayment;
+                            const isPaid = lastPay?.status === "PAID" || lastPay?.status === "CONFIRMED";
+                            return (
+                                <TableRow key={partner.id}>
+                                    <TableCell>{partner.name}</TableCell>
+                                    <TableCell>{partner.email}</TableCell>
+                                    <TableCell>{partner.number}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="default">{t("partners_tab.approved.active")}</Badge>
+                                    </TableCell>
+                                    <TableCell>₹{partner.monthlyEarnings?.toFixed(2) || '0.00'}</TableCell>
+                                    <TableCell>
+                                        {isPaid ? (
+                                            <Badge className="bg-green-600 hover:bg-green-700">Paid</Badge>
+                                        ) : (
+                                            <Badge variant="secondary">Pending</Badge>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                asChild
+                                            >
+                                                <Link to={`/partners/${partner.id}`}>
+                                                    <Eye className="h-4 w-4 mr-1" />
+                                                    {t("reviews.actions.view")}
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="destructive"
+                                                onClick={() => handleRemovePartner(partner.id)}
+                                                disabled={removingPartnerId === partner.id}
+                                            >
+                                                <UserMinus className="h-4 w-4 mr-1" />
+                                                {removingPartnerId === partner.id ? t("partners_tab.approved.removing") : t("partners_tab.approved.remove")}
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })
                     )}
                 </TableBody>
             </Table>

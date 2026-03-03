@@ -41,10 +41,15 @@ import adminShiprocketRoutes from "./routes/admin.shiprocket.routes.js";
 
 const app = express();
 
+/* -------------------- TRUST PROXY -------------------- */
+
+// Required for rate limiters to work correctly behind Nginx/Cloudflare
+app.set('trust proxy', 1);
+
 /* -------------------- BASIC MIDDLEWARE -------------------- */
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(cookieParser());
 
 /* -------------------- REQUEST LOGGER -------------------- */

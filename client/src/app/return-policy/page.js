@@ -116,7 +116,7 @@ export default function ReturnPolicyPage() {
                             For return requests or queries, contact us at:
                         </p>
                         <ul className="space-y-2">
-                            <li>Email: <strong>DjChallengerIndia@gmail.com</strong></li>
+                            <li>Email: <strong>Info@djchallenger.in</strong></li>
 
                             <li>Available: Monday - Saturday, 9 AM - 7 PM</li>
                         </ul>

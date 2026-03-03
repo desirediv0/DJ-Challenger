@@ -69,12 +69,12 @@ export default function ContactPage() {
             <section className="max-w-7xl mx-auto px-4 -mt-4 pb-12">
                 <div className="grid md:grid-cols-2 gap-6">
                     {/* Email */}
-                    <a href="mailto:DjChallengerIndia@gmail.com" className="group bg-white rounded-2xl p-6 border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-center">
+                    <a href="mailto:Info@djchallenger.in" className="group bg-white rounded-2xl p-6 border border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-center">
                         <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
                             <Mail className="h-6 w-6 text-primary" />
                         </div>
                         <h3 className="text-lg font-bold text-gray-900 mb-1">Email Us</h3>
-                        <p className="text-primary font-semibold text-sm mb-1 break-all">DjChallengerIndia@gmail.com</p>
+                        <p className="text-primary font-semibold text-sm mb-1 break-all">Info@djchallenger.in</p>
                         <p className="text-gray-500 text-sm">We reply within 24 hours</p>
                     </a>
 

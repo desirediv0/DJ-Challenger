@@ -81,7 +81,8 @@ export default function PartnerDetailsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
-    const [paymentNotes, setPaymentNotes] = useState<string>("");
+    const [paymentNotesMap, setPaymentNotesMap] = useState<Record<string, string>>({});
+
     const [isProcessingPayment, setIsProcessingPayment] = useState<string | null>(null);
 
     // Add a refresh function
@@ -135,7 +136,8 @@ export default function PartnerDetailsPage() {
 
     // Mark payment as paid
     const handleMarkAsPaid = async (earningId: string, year: number, month: number) => {
-        if (!paymentNotes.trim()) {
+        const notes = paymentNotesMap[earningId] || '';
+        if (!notes.trim()) {
             toast.error(t('partner_management.details.toasts.notes_required') || "Please add payment notes");
             return;
         }
@@ -143,14 +145,15 @@ export default function PartnerDetailsPage() {
         try {
             setIsProcessingPayment(earningId);
             const response = await partners.markPaymentAsPaid(earningId, {
-                notes: paymentNotes,
+                notes,
                 year,
                 month
             });
 
             if (response.data.success) {
                 toast.success(t('partner_management.details.toasts.payment_success') || "Payment marked as paid successfully");
-                setPaymentNotes("");
+                // Clear only this row's notes
+                setPaymentNotesMap(prev => { const n = { ...prev }; delete n[earningId]; return n; });
 
                 // Update the local state immediately
                 setPartner(prev => {
@@ -162,7 +165,7 @@ export default function PartnerDetailsPage() {
                                 ? {
                                     ...earning,
                                     paymentStatus: 'PAID' as const,
-                                    notes: paymentNotes,
+                                    notes,
                                     paidAt: new Date().toISOString()
                                 }
                                 : earning
@@ -457,8 +460,8 @@ export default function PartnerDetailsPage() {
                                                 <div className="flex items-center gap-2 justify-end">
                                                     <Input
                                                         placeholder={t('partner_management.details.earnings.payment_notes_placeholder')}
-                                                        value={paymentNotes}
-                                                        onChange={(e) => setPaymentNotes(e.target.value)}
+                                                        value={paymentNotesMap[earning.id] || ''}
+                                                        onChange={(e) => setPaymentNotesMap(prev => ({ ...prev, [earning.id]: e.target.value }))}
                                                         className="w-32 text-xs"
                                                     />
                                                     <Button

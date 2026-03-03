@@ -45,6 +45,10 @@ router.get("/partners/approved", isAdmin, async (req, res) => {
         });
 
 
+        const now = new Date();
+        const lastYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+        const lastMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // 1-12
+
         // Calculate earnings for each partner
         const partnersWithEarnings = await Promise.all(
             partners.map(async (partner) => {
@@ -57,6 +61,18 @@ router.get("/partners/approved", isAdmin, async (req, res) => {
                         }
                     },
                     select: { amount: true, createdAt: true },
+                });
+
+                // Get last month's payment status for this partner
+                const lastMonthRecord = await prisma.partnerMonthlyEarning.findUnique({
+                    where: {
+                        partnerId_year_month: {
+                            partnerId: partner.id,
+                            year: lastYear,
+                            month: lastMonth
+                        }
+                    },
+                    select: { paymentStatus: true, totalAmount: true, paidAt: true, id: true }
                 });
 
                 let totalEarnings = 0;
@@ -97,7 +113,13 @@ router.get("/partners/approved", isAdmin, async (req, res) => {
                     earnings: {
                         total: totalEarnings,
                         monthly: monthlyBreakdown
-                    }
+                    },
+                    lastMonthPayment: lastMonthRecord ? {
+                        status: lastMonthRecord.paymentStatus,
+                        totalAmount: lastMonthRecord.totalAmount,
+                        paidAt: lastMonthRecord.paidAt,
+                        monthlyEarningId: lastMonthRecord.id
+                    } : { status: 'PENDING', totalAmount: 0, paidAt: null, monthlyEarningId: null }
                 };
             })
         );

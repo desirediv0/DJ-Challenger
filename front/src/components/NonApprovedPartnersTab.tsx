@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { formatDate } from "@/lib/utils";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { formatDate } from "@/lib/utils";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -32,6 +33,13 @@ export default function NonApprovedPartnersTab() {
     const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
     const [selectedPartner, setSelectedPartner] = useState<PendingPartner | null>(null);
 
+    // Message dialog state
+    const [messageDialogOpen, setMessageDialogOpen] = useState(false);
+    const [messagePartnerId, setMessagePartnerId] = useState<string | null>(null);
+    const [messageText, setMessageText] = useState("");
+    const [messageSending, setMessageSending] = useState(false);
+    const [messageError, setMessageError] = useState("");
+
     // Approve dialog state
     const [approveDialogOpen, setApproveDialogOpen] = useState(false);
     const [approveId, setApproveId] = useState<string | null>(null);
@@ -41,13 +49,13 @@ export default function NonApprovedPartnersTab() {
     useEffect(() => {
         async function fetchNonApprovedPartners() {
             try {
-                const res = await axios.get(`${API_URL}/api/admin/partners/requests`);
-                const allRequests = res.data.data.requests || [];
-                // Filter only pending and rejected
-                const nonApproved = allRequests.filter((p: PendingPartner) =>
-                    p.status === "PENDING" || p.status === "REJECTED"
-                );
-                setPartners(nonApproved);
+                const res = await axios.get(`${API_URL}/api/admin/partners/requests`, {
+                    params: { status: "PENDING" },
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                });
+                setPartners(res.data.data.requests || []);
             } catch {
                 setError(t("reviews.messages.fetch_error"));
             }
@@ -108,6 +116,52 @@ export default function NonApprovedPartnersTab() {
         }
     };
 
+    const openMessageDialog = (partnerId: string) => {
+        setMessagePartnerId(partnerId);
+        setMessageText("");
+        setMessageError("");
+        setMessageDialogOpen(true);
+    };
+
+    const closeMessageDialog = () => {
+        setMessageDialogOpen(false);
+        setMessagePartnerId(null);
+        setMessageText("");
+        setMessageError("");
+    };
+
+    const handleSendMessage = async () => {
+        if (!messageText.trim()) {
+            setMessageError(t("partner_management.registrations.message_dialog.placeholder"));
+            return;
+        }
+        if (!messagePartnerId) {
+            setMessageError(t("partner_management.registrations.message_dialog.error"));
+            return;
+        }
+
+        setMessageSending(true);
+        setMessageError("");
+        try {
+            const res = await axios.post(
+                `${API_URL}/api/admin/partners/${messagePartnerId}/message`,
+                { message: messageText },
+                { headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` } }
+            );
+
+            if (res?.data && res.data.success !== false) {
+                alert(t("partner_management.registrations.message_dialog.success"));
+                closeMessageDialog();
+            } else {
+                setMessageError(res?.data?.message || t("partner_management.registrations.message_dialog.error"));
+            }
+        } catch (err) {
+            setMessageError(t("partner_management.registrations.message_dialog.error"));
+        } finally {
+            setMessageSending(false);
+        }
+    };
+
     if (loading) {
         return <div className="text-center py-10 text-muted-foreground">{t("partners_tab.common.loading")}</div>;
     }
@@ -155,6 +209,13 @@ export default function NonApprovedPartnersTab() {
                                         onClick={() => openDetailsDialog(partner)}
                                     >
                                         {t("partners_tab.common.details")}
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => openMessageDialog(partner.id)}
+                                    >
+                                        {t("partner_management.registrations.actions.message")}
                                     </Button>
                                     {partner.status === "PENDING" && (
                                         <>
@@ -293,10 +354,23 @@ export default function NonApprovedPartnersTab() {
                     )}
 
                     <div className="bg-accent p-4 rounded-lg">
-                        <p className="font-semibold text-sm mb-2">{t("partners_tab.non_approved.demo_pass")}:</p>
-                        <p className="font-mono text-lg bg-background px-3 py-2 rounded border">
-                            djchallenger
-                        </p>
+                        <p className="font-semibold text-sm mb-2">{t("partners_tab.non_approved.demo_password")}:</p>
+                        <div className="flex items-center gap-2">
+                            <p className="font-mono text-lg bg-background px-3 py-2 rounded border">
+                                {import.meta.env.VITE_DEMO_PASSWORD || "djchallenger"}
+                            </p>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(import.meta.env.VITE_DEMO_PASSWORD || "djchallenger");
+                                    alert(t("partners_tab.non_approved.copied_password"));
+                                }}
+                                title={t("partners_tab.non_approved.copy")}
+                            >
+                                📋
+                            </Button>
+                        </div>
                         <p className="text-xs text-muted-foreground mt-2">
                             {t("partners_tab.non_approved.demo_note")}
                         </p>
@@ -308,6 +382,48 @@ export default function NonApprovedPartnersTab() {
                         </Button>
                         <DialogClose asChild>
                             <Button variant="outline" type="button" disabled={approveLoading}>
+                                {t("partners_tab.common.cancel")}
+                            </Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Message Dialog */}
+            <Dialog open={messageDialogOpen} onOpenChange={setMessageDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t("partner_management.registrations.message_dialog.title")}</DialogTitle>
+                        <DialogDescription>
+                            {t("partner_management.registrations.message_dialog.description")}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {messageError && (
+                        <Alert variant="destructive" className="mb-2">
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{messageError}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    <div className="space-y-4">
+                        <Textarea
+                            placeholder={t("partner_management.registrations.message_dialog.placeholder")}
+                            value={messageText}
+                            onChange={(e) => {
+                                setMessageText(e.target.value);
+                                setMessageError("");
+                            }}
+                            className="min-h-32"
+                        />
+                    </div>
+
+                    <DialogFooter>
+                        <Button onClick={handleSendMessage} disabled={messageSending}>
+                            {messageSending ? t("partner_management.registrations.message_dialog.sending") : t("partner_management.registrations.message_dialog.send")}
+                        </Button>
+                        <DialogClose asChild>
+                            <Button variant="outline" type="button" disabled={messageSending}>
                                 {t("partners_tab.common.cancel")}
                             </Button>
                         </DialogClose>

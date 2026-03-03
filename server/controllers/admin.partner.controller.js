@@ -7,7 +7,15 @@ import { prisma } from '../config/db.js';
 
 // List all partner requests
 export const listPartnerRequests = asyncHandler(async (req, res) => {
+    const { status } = req.query;
+
+    const where = {};
+    if (status) {
+        where.status = status.toUpperCase();
+    }
+
     const requests = await prisma.partnerRequest.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         include: { partner: true },
     });
@@ -17,6 +25,14 @@ export const listPartnerRequests = asyncHandler(async (req, res) => {
         partner: r.partner ? (({ password, ...rest }) => rest)(r.partner) : undefined
     }));
     res.status(200).json(new ApiResponsive(200, { requests: safeRequests }, 'Partner requests fetched'));
+});
+
+// Get count of non-approved partner requests
+export const getNonApprovedPartnerCount = asyncHandler(async (req, res) => {
+    const count = await prisma.partnerRequest.count({
+        where: { status: 'PENDING' }
+    });
+    res.status(200).json(new ApiResponsive(200, { count }, 'Non-approved partner count fetched'));
 });
 
 // Approve partner request and set password
@@ -568,4 +584,229 @@ export const getPartnerEarnings = asyncHandler(async (req, res) => {
         totalOrders: earnings.length,
         filters: { year, month }
     }, 'Partner earnings fetched successfully'));
+});
+
+// Get top 5 partners by coupon sales (last month)
+export const getTopPartnersByCouponSales = asyncHandler(async (req, res) => {
+    const now = new Date();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const topPartners = await prisma.partnerEarning.groupBy({
+        by: ['partnerId'],
+        where: {
+            createdAt: {
+                gte: lastMonthStart,
+                lt: lastMonthEnd
+            }
+        },
+        _sum: {
+            amount: true
+        },
+        _count: true,
+        orderBy: {
+            _sum: {
+                amount: 'desc'
+            }
+        },
+        take: 5
+    });
+
+    // Get partner details for each top partner
+    const partnersWithDetails = await Promise.all(
+        topPartners.map(async (tp) => {
+            const partner = await prisma.partner.findUnique({
+                where: { id: tp.partnerId },
+                select: { id: true, name: true, email: true }
+            });
+            return {
+                partnerId: tp.partnerId,
+                name: partner?.name || 'Unknown',
+                email: partner?.email || '',
+                totalEarnings: parseFloat(tp._sum.amount || 0),
+                orderCount: tp._count,
+                month: `${lastMonthStart.getFullYear()}-${String(lastMonthStart.getMonth() + 1).padStart(2, '0')}`
+            };
+        })
+    );
+
+    res.status(200).json(new ApiResponsive(200, { topPartners: partnersWithDetails }, 'Top partners fetched'));
+});
+
+// Get partner earnings summary for dashboard (admin)
+export const getPartnersEarningsSummary = asyncHandler(async (req, res) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    // Get all partners
+    const partners = await prisma.partner.findMany({
+        where: { isActive: true },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            earnings: {
+                select: {
+                    amount: true,
+                    createdAt: true
+                }
+            }
+        }
+    });
+
+    // Calculate total earnings per partner and monthly breakdown
+    const summary = partners.map(partner => {
+        const totalEarnings = parseFloat(
+            partner.earnings.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0).toFixed(2)
+        );
+
+        // This year earnings
+        const thisYearEarnings = parseFloat(
+            partner.earnings
+                .filter(e => new Date(e.createdAt).getFullYear() === currentYear)
+                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0)
+                .toFixed(2)
+        );
+
+        // Last month earnings
+        const lastMonthStart = new Date(currentYear, currentMonth - 2, 1);
+        const lastMonthEnd = new Date(currentYear, currentMonth - 1, 1);
+        const lastMonthEarnings = parseFloat(
+            partner.earnings
+                .filter(e => {
+                    const d = new Date(e.createdAt);
+                    return d >= lastMonthStart && d < lastMonthEnd;
+                })
+                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0)
+                .toFixed(2)
+        );
+
+        // This month earnings
+        const thisMonthStart = new Date(currentYear, currentMonth - 1, 1);
+        const thisMonthEnd = new Date(currentYear, currentMonth, 1);
+        const thisMonthEarnings = parseFloat(
+            partner.earnings
+                .filter(e => {
+                    const d = new Date(e.createdAt);
+                    return d >= thisMonthStart && d < thisMonthEnd;
+                })
+                .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0)
+                .toFixed(2)
+        );
+
+        return {
+            partnerId: partner.id,
+            name: partner.name,
+            email: partner.email,
+            totalEarnings,
+            thisYearEarnings,
+            lastMonthEarnings,
+            thisMonthEarnings,
+            orderCount: partner.earnings.length
+        };
+    });
+
+    // Sort by total earnings descending
+    summary.sort((a, b) => b.totalEarnings - a.totalEarnings);
+
+    // Get monthly aggregated data for chart
+    const allEarnings = await prisma.partnerEarning.findMany({
+        select: {
+            amount: true,
+            createdAt: true
+        }
+    });
+
+    const monthlyData = {};
+    const today = new Date();
+
+    // Initialize last 12 months
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[monthKey] = 0;
+    }
+
+    // Aggregate earnings by month
+    allEarnings.forEach(earning => {
+        const d = new Date(earning.createdAt);
+        const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (monthlyData.hasOwnProperty(monthKey)) {
+            monthlyData[monthKey] += parseFloat(earning.amount || 0);
+        }
+    });
+
+    const monthlyChartData = Object.entries(monthlyData).map(([month, total]) => ({
+        month,
+        total: parseFloat(total.toFixed(2))
+    }));
+
+    res.status(200).json(new ApiResponsive(200, {
+        summary,
+        monthlyChartData,
+        totalPartners: partners.length,
+        totalEarnings: parseFloat(summary.reduce((sum, p) => sum + p.totalEarnings, 0).toFixed(2))
+    }, 'Partners earnings summary fetched'));
+});
+
+// Get monthly payment confirmation status
+export const getMonthlyPaymentStatus = asyncHandler(async (req, res) => {
+    const { partnerId, year, month } = req.params;
+
+    const monthlyEarning = await prisma.partnerMonthlyEarning.findUnique({
+        where: {
+            partnerId_year_month: {
+                partnerId,
+                year: parseInt(year),
+                month: parseInt(month)
+            }
+        },
+        select: {
+            id: true,
+            totalAmount: true,
+            totalOrders: true,
+            paymentStatus: true,
+            paidAt: true,
+            paidBy: true,
+            notes: true
+        }
+    });
+
+    res.status(200).json(new ApiResponsive(200, { monthlyEarning }, 'Payment status fetched'));
+});
+
+// Confirm monthly payment for partner
+export const confirmMonthlyPayment = asyncHandler(async (req, res) => {
+    const { partnerId } = req.params;
+    const { year, month, notes } = req.body;
+
+    const monthlyEarning = await prisma.partnerMonthlyEarning.upsert({
+        where: {
+            partnerId_year_month: {
+                partnerId,
+                year: parseInt(year),
+                month: parseInt(month)
+            }
+        },
+        update: {
+            paymentStatus: 'CONFIRMED',
+            paidAt: new Date(),
+            paidBy: req.admin?.id ?? null,
+            notes: notes || ''
+        },
+        create: {
+            partnerId,
+            year: parseInt(year),
+            month: parseInt(month),
+            totalAmount: 0,
+            totalOrders: 0,
+            paymentStatus: 'CONFIRMED',
+            paidAt: new Date(),
+            paidBy: req.admin?.id ?? null,
+            notes: notes || ''
+        }
+    });
+
+    res.status(200).json(new ApiResponsive(200, monthlyEarning, 'Payment confirmed'));
 });

@@ -502,3 +502,62 @@ export const getPartnerEarningsEnhanced = asyncHandler(async (req, res) => {
         filters: { year, month, startDate, endDate }
     }, 'Enhanced earnings data fetched successfully'));
 });
+
+// Partner-specific payment status (for their own months)
+export const getPartnerPaymentStatus = asyncHandler(async (req, res) => {
+    const partnerId = req.partner.id;
+    const { year, month } = req.params;
+
+    const monthlyEarning = await prisma.partnerMonthlyEarning.findUnique({
+        where: {
+            partnerId_year_month: {
+                partnerId,
+                year: parseInt(year),
+                month: parseInt(month)
+            }
+        },
+        select: {
+            id: true,
+            totalAmount: true,
+            totalOrders: true,
+            paymentStatus: true,
+            paidAt: true,
+            notes: true
+        }
+    });
+
+    res.status(200).json(new ApiResponsive(200, { monthlyEarning }, 'Payment status fetched'));
+});
+
+// Partner confirmations (partners can mark their month as confirmed for admin review)
+export const confirmPartnerPayment = asyncHandler(async (req, res) => {
+    const partnerId = req.partner.id;
+    const { year, month, notes } = req.body;
+
+    const monthlyEarning = await prisma.partnerMonthlyEarning.upsert({
+        where: {
+            partnerId_year_month: {
+                partnerId,
+                year: parseInt(year),
+                month: parseInt(month)
+            }
+        },
+        update: {
+            paymentStatus: 'CONFIRMED',
+            paidAt: new Date(),
+            notes: notes || ''
+        },
+        create: {
+            partnerId,
+            year: parseInt(year),
+            month: parseInt(month),
+            totalAmount: 0,
+            totalOrders: 0,
+            paymentStatus: 'CONFIRMED',
+            paidAt: new Date(),
+            notes: notes || ''
+        }
+    });
+
+    res.status(200).json(new ApiResponsive(200, monthlyEarning, 'Payment confirmed'));
+});

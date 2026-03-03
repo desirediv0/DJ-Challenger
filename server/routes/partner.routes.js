@@ -6,7 +6,9 @@ import {
     getPartnerDashboard,
     getPartnerCoupons,
     getPartnerEarnings,
-    getPartnerEarningsEnhanced
+    getPartnerEarningsEnhanced,
+    getPartnerPaymentStatus,
+    confirmPartnerPayment
 } from '../controllers/partner.controller.js';
 import { verifyPartnerJWT } from '../middlewares/partner.auth.middleware.js';
 
@@ -24,5 +26,9 @@ router.get('/dashboard', getPartnerDashboard);
 router.get('/coupons', getPartnerCoupons);
 router.get('/earnings', getPartnerEarningsEnhanced); // Updated to use enhanced version
 router.get('/earnings/legacy', getPartnerEarnings); // Keep old version as backup
+
+// Payment status & confirmation (partner-specific)
+router.get('/payment-status/:year/:month', verifyPartnerJWT, getPartnerPaymentStatus);
+router.post('/confirm-payment', verifyPartnerJWT, confirmPartnerPayment);
 
 export default router;

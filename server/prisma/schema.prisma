@@ -868,6 +868,7 @@ enum ContactSubmissionStatus {
 enum PartnerPaymentStatus {
   PENDING
   PAID
+  CONFIRMED
   CANCELLED
 }
 

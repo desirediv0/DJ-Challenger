@@ -311,8 +311,14 @@ export default function AnalyticsDashboard() {
                         <h3 className="font-semibold text-[#1F2937] text-base">
                           {user.name || t("analytics.carts.anonymous")}
                         </h3>
-                        <p className="text-sm text-[#9CA3AF] mt-0.5">
-                          {user.email}
+                        <p className="text-sm text-[#9CA3AF] mt-0.5 flex items-center gap-2">
+                          <span>{user.email}</span>
+                          {user.phone && (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-[#D1D5DB]" />
+                              <span>{user.phone}</span>
+                            </>
+                          )}
                         </p>
                       </div>
                       <div className="text-right">

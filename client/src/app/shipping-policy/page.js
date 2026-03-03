@@ -97,7 +97,7 @@ export default function ShippingPolicyPage() {
                         <h2 className="font-display text-2xl font-bold mb-4">International Shipping</h2>
                         <p className="mb-8">
                             We ship to select international locations. Shipping charges and delivery times vary by country.
-                            Please contact our support team at <strong>DjChallengerIndia@gmail.com</strong>
+                            Please contact our support team at <strong>Info@djchallenger.in</strong>
                         </p>
                     </div>
                 </div>

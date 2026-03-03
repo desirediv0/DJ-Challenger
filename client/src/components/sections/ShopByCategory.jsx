@@ -6,43 +6,43 @@ import { ArrowRight } from "lucide-react";
 
 const categories = [
   {
-    name: "DJ Speakers",
-    slug: "dj-speakers",
+    name: "Amplifier",
+    slug: "amplifier",
     description: "Professional sound systems",
     image: "/dj-challenger.jpg",
     products: "25+ Products"
   },
   {
-    name: "PD Series",
-    slug: "pd-series",
+    name: "Crossover Network",
+    slug: "crossover-network",
     description: "Power-packed performance",
     image: "/hero-slide-1.png",
     products: "15+ Products"
   },
   {
-    name: "PA Series",
-    slug: "pa-series",
+    name: "Driver Unit",
+    slug: "driver-unit",
     description: "Public address systems",
     image: "/hero-slide-2.jpg",
     products: "20+ Products"
   },
   {
-    name: "Amplifiers",
-    slug: "amplifiers",
+    name: "Megaphone",
+    slug: "megaphone",
     description: "High-power amplification",
     image: "/hero-slide-3.png",
     products: "30+ Products"
   },
   {
-    name: "NEO Series",
-    slug: "neo-series",
+    name: "Mixer",
+    slug: "mixer",
     description: "Next-gen technology",
     image: "/dj-challenger.jpg",
     products: "12+ Products"
   },
   {
-    name: "Trolley Speakers",
-    slug: "trolley-speakers",
+    name: "NEO Speaker",
+    slug: "neo-speaker",
     description: "Portable solutions",
     image:  "/hero-slide-1.png",
     products: "18+ Products"

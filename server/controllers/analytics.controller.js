@@ -129,7 +129,7 @@ export const getMostViewedProducts = asyncHandler(async (req, res) => {
       // Get unique color and size counts from attributes
       const colorSet = new Set();
       const sizeSet = new Set();
-      
+
       product.variants.forEach((variant) => {
         const attributes = extractAllAttributes(variant);
         if (attributes["Color"]) {
@@ -151,8 +151,8 @@ export const getMostViewedProducts = asyncHandler(async (req, res) => {
           basePrice:
             product.variants.length > 0
               ? parseFloat(
-                  product.variants[0].salePrice || product.variants[0].price
-                )
+                product.variants[0].salePrice || product.variants[0].price
+              )
               : 0,
           variants: product._count.variants,
           variantInfo: {
@@ -261,10 +261,10 @@ export const getUsersWithProductsInCart = asyncHandler(async (req, res) => {
             : null,
           category: primaryCategory
             ? {
-                id: primaryCategory.id,
-                name: primaryCategory.name,
-                slug: primaryCategory.slug,
-              }
+              id: primaryCategory.id,
+              name: primaryCategory.name,
+              slug: primaryCategory.slug,
+            }
             : null,
           variant: {
             id: item.productVariant.id,
@@ -279,11 +279,11 @@ export const getUsersWithProductsInCart = asyncHandler(async (req, res) => {
               : null,
             discount: item.productVariant.salePrice
               ? Math.round(
-                  (1 -
-                    parseFloat(item.productVariant.salePrice) /
-                      parseFloat(item.productVariant.price)) *
-                    100
-                )
+                (1 -
+                  parseFloat(item.productVariant.salePrice) /
+                  parseFloat(item.productVariant.price)) *
+                100
+              )
               : 0,
           },
         },
@@ -294,6 +294,7 @@ export const getUsersWithProductsInCart = asyncHandler(async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       totalItems: user.cartItems.length,
       totalValue,
       cartItems,
