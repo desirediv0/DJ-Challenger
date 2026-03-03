@@ -80,7 +80,7 @@ export default function CategoriesCarousel() {
           100% { transform: translateX(-50%); }
         }
         .animate-marquee-smooth {
-          animation: customMarquee 25s linear infinite;
+          animation: customMarquee 45s linear infinite;
         }
         .animate-marquee-smooth:hover {
           animation-play-state: paused;
