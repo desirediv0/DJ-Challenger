@@ -85,17 +85,17 @@ const ResetPassword = () => {
 
     if (!isValidToken) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 py-12 px-4">
-                <Card className="w-full max-w-md shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
+            <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-[#DE7A3E]/[0.12] via-white/40 to-[#7596DB]/[0.18]">
+                <Card className="w-full max-w-md shadow-xl border border-white/50 bg-white/65 backdrop-blur-md">
                     <CardContent className="p-8 text-center">
-                        <AlertCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-                        <h2 className="text-xl font-bold text-gray-800 mb-2">Invalid Reset Link</h2>
+                        <AlertCircle className="mx-auto h-16 w-16 text-[#DE7A3E] mb-4" />
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Invalid Reset Link</h2>
                         <p className="text-gray-600 mb-6">
                             This password reset link has expired or is invalid. Please request a new one.
                         </p>
                         <Button
                             onClick={() => navigate('/login')}
-                            className="w-full bg-gradient-to-r from-[#DE7A3E] to-red-500 hover:from-orange-600 hover:to-red-600"
+                            className="w-full bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] hover:from-[#c96a35] hover:to-[#5a7fc4] text-white"
                         >
                             Back to Login
                         </Button>
@@ -106,14 +106,14 @@ const ResetPassword = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-12 px-4">
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-[#DE7A3E]/[0.12] via-white/40 to-[#7596DB]/[0.18]">
             <div className="max-w-md w-full space-y-8">
                 {/* Header */}
                 <div className="text-center">
-                    <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
+                    <div className="mx-auto w-20 h-20 bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] rounded-full flex items-center justify-center mb-6 shadow-lg">
                         <span className="text-white text-2xl font-bold">🔑</span>
                     </div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] bg-clip-text text-transparent">
                         Reset Password
                     </h2>
                     <p className="mt-2 text-sm text-gray-600">
@@ -121,9 +121,9 @@ const ResetPassword = () => {
                     </p>
                 </div>
 
-                <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="text-center pb-6 bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-t-lg">
-                        <CardTitle className="text-2xl font-bold text-gray-800">Set New Password</CardTitle>
+                <Card className="shadow-xl border border-white/50 bg-white/65 backdrop-blur-md rounded-xl overflow-hidden">
+                    <CardHeader className="text-center pb-6 bg-gradient-to-r from-[#DE7A3E]/[0.08] to-[#7596DB]/[0.12] border-b border-white/40">
+                        <CardTitle className="text-2xl font-bold text-gray-900">Set New Password</CardTitle>
                         <p className="text-gray-600">Create a strong password for your account</p>
                     </CardHeader>
 
@@ -131,7 +131,7 @@ const ResetPassword = () => {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
                                 <Label htmlFor="newPassword" className="text-gray-700 font-semibold flex items-center mb-2">
-                                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                                    <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] mr-2"></span>
                                     New Password
                                 </Label>
                                 <div className="relative">
@@ -142,14 +142,14 @@ const ResetPassword = () => {
                                         value={formData.newPassword}
                                         onChange={handleInputChange}
                                         placeholder="Enter your new password"
-                                        className="h-12 pr-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
+                                        className="h-12 pr-12 border border-gray-200/90 bg-white/80 text-gray-900 focus:border-[#DE7A3E] focus:ring-2 focus:ring-[#7596DB]/25 transition-all duration-200"
                                         required
                                     />
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        className="absolute right-1 top-1 h-10 w-10 text-gray-500 hover:text-blue-500 transition-colors"
+                                        className="absolute right-1 top-1 h-10 w-10 text-gray-500 hover:text-[#7596DB] transition-colors"
                                         onClick={() => setShowPassword(!showPassword)}
                                     >
                                         {showPassword ? (
@@ -164,7 +164,7 @@ const ResetPassword = () => {
 
                             <div>
                                 <Label htmlFor="confirmPassword" className="text-gray-700 font-semibold flex items-center mb-2">
-                                    <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                                    <span className="w-2 h-2 rounded-full bg-gradient-to-r from-[#7596DB] to-[#DE7A3E] mr-2"></span>
                                     Confirm New Password
                                 </Label>
                                 <div className="relative">
@@ -175,14 +175,14 @@ const ResetPassword = () => {
                                         value={formData.confirmPassword}
                                         onChange={handleInputChange}
                                         placeholder="Re-enter your new password"
-                                        className="h-12 pr-12 border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-200"
+                                        className="h-12 pr-12 border border-gray-200/90 bg-white/80 text-gray-900 focus:border-[#DE7A3E] focus:ring-2 focus:ring-[#7596DB]/25 transition-all duration-200"
                                         required
                                     />
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        className="absolute right-1 top-1 h-10 w-10 text-gray-500 hover:text-purple-500 transition-colors"
+                                        className="absolute right-1 top-1 h-10 w-10 text-gray-500 hover:text-[#DE7A3E] transition-colors"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                     >
                                         {showConfirmPassword ? (
@@ -196,7 +196,7 @@ const ResetPassword = () => {
 
                             <Button
                                 type="submit"
-                                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                                className="w-full h-12 bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] hover:from-[#c96a35] hover:to-[#5a7fc4] text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
@@ -217,7 +217,7 @@ const ResetPassword = () => {
                             <button
                                 type="button"
                                 onClick={() => navigate('/login')}
-                                className="text-sm text-blue-600 hover:text-purple-600 underline font-medium transition-colors duration-200"
+                                className="text-sm text-[#5a6d9e] hover:text-[#DE7A3E] underline font-medium transition-colors duration-200"
                             >
                                 Back to Login
                             </button>

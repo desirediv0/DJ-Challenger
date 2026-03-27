@@ -52,8 +52,9 @@ const PartnerCoupons = () => {
                 // Transform the data to match the expected format
                 const transformedCoupons = response.data.coupons.map(item => {
                     const coupon = item.coupon;
-                    const orderCount = coupon._count?.orders || 0;
-                    const commissionRate = item.commission || 0;
+                    // Server sends orderCount = delivered orders used for commission; fallback to _count
+                    const orderCount = item.orderCount ?? coupon._count?.orders ?? 0;
+                    const commissionRate = item.commission ?? 0;
                     const actualEarnings = item.actualEarnings || 0; // Get from server
 
                     return {

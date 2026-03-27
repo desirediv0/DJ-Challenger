@@ -87,13 +87,21 @@ export default function NonApprovedPartnersTab() {
         setApproveLoading(true);
         setApproveApiError("");
         try {
-            const response = await axios.post(`${API_URL}/api/admin/partners/requests/${approveId}/approve`);
+            const response = await axios.post(
+                `${API_URL}/api/admin/partners/requests/${approveId}/approve`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
             // Remove from list since it's now approved
             setPartners(prev => prev.filter(p => p.id !== approveId));
             closeApproveDialog();
 
             // Show demo password to admin
-            const demoPassword = response.data.data.demoPassword || 'djchallenger';
+            const demoPassword = response.data.data.demoPassword || "PartnerPortal@123";
             alert(t("partners_tab.non_approved.approve_success", { password: demoPassword }));
         } catch (err) {
             if (axios.isAxiosError(err)) {

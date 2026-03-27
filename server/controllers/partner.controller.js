@@ -12,13 +12,16 @@ export const registerPartner = asyncHandler(async (req, res) => {
     if (!name || !email || !number || !city || !state || !message) {
         return res.status(400).json(new ApiResponsive(400, null, 'All fields are required'));
     }
+    const emailNorm = String(email).trim().toLowerCase();
     // Check if already requested
-    const exists = await prisma.partnerRequest.findFirst({ where: { email } });
+    const exists = await prisma.partnerRequest.findFirst({
+        where: { email: { equals: emailNorm, mode: 'insensitive' } }
+    });
     if (exists) {
         return res.status(409).json(new ApiResponsive(409, null, 'Request already submitted'));
     }
     const request = await prisma.partnerRequest.create({
-        data: { name, email, number, city, state, message },
+        data: { name, email: emailNorm, number, city, state, message },
     });
     res.status(201).json(new ApiResponsive(201, { request }, 'Request submitted'));
 });
@@ -29,7 +32,10 @@ export const partnerLogin = asyncHandler(async (req, res) => {
     if (!email || !password) {
         return res.status(400).json(new ApiResponsive(400, null, 'Email and password required'));
     }
-    const partner = await prisma.partner.findUnique({ where: { email } });
+    const emailNorm = String(email).trim().toLowerCase();
+    const partner = await prisma.partner.findFirst({
+        where: { email: { equals: emailNorm, mode: 'insensitive' } }
+    });
     if (!partner || !partner.isActive) {
         return res.status(401).json(new ApiResponsive(401, null, 'Invalid credentials'));
     }
@@ -50,7 +56,9 @@ export const getPartnerProfile = asyncHandler(async (req, res) => {
             id: true,
             name: true,
             email: true,
-            phone: true,
+            number: true,
+            city: true,
+            state: true,
             commissionRate: true,
             isActive: true,
             createdAt: true
@@ -61,56 +69,65 @@ export const getPartnerProfile = asyncHandler(async (req, res) => {
 });
 
 // Get partner dashboard stats (protected)
+// Uses PartnerEarning rows (created when order is DELIVERED with coupon) so amounts match admin commission logic.
 export const getPartnerDashboard = asyncHandler(async (req, res) => {
     const partnerId = req.partner.id;
 
-    // Get total coupons assigned to this partner
     const totalCoupons = await prisma.couponPartner.count({
         where: { partnerId }
     });
 
-    // Get only DELIVERED orders for commission calculation
-    const orders = await prisma.order.findMany({
+    const earningsRows = await prisma.partnerEarning.findMany({
         where: {
-            status: 'DELIVERED', // Only count delivered orders for earnings
-            coupon: {
-                couponPartners: {
-                    some: { partnerId }
-                }
-            }
+            partnerId,
+            order: { status: 'DELIVERED' }
         },
         include: {
-            coupon: {
-                include: {
-                    couponPartners: {
-                        where: { partnerId }
-                    }
+            order: {
+                select: {
+                    id: true,
+                    orderNumber: true,
+                    status: true,
+                    total: true,
+                    discount: true,
+                    createdAt: true
                 }
+            },
+            coupon: {
+                select: { code: true }
             }
         },
         orderBy: { createdAt: 'desc' }
     });
 
-    // Calculate actual commission earned from each order
     let totalOrderValue = 0;
     let totalCommissionEarned = 0;
     let totalCommissionRate = 0;
 
-    orders.forEach(order => {
-        const orderAmount = parseFloat(order.total || 0);
-        const commissionPercentage = order.coupon?.couponPartners[0]?.commission || 0;
-        const commissionEarned = (orderAmount * commissionPercentage) / 100;
-
-        totalOrderValue += orderAmount;
-        totalCommissionEarned += commissionEarned;
-        totalCommissionRate += commissionPercentage;
+    earningsRows.forEach(e => {
+        totalOrderValue += parseFloat(e.order?.total || 0);
+        totalCommissionEarned += parseFloat(e.amount);
+        totalCommissionRate += e.percentage || 0;
     });
 
-    // Calculate average commission rate
-    const averageCommissionRate = orders.length > 0 ? totalCommissionRate / orders.length : 0;
+    const averageCommissionRate = earningsRows.length > 0
+        ? totalCommissionRate / earningsRows.length
+        : 0;
 
-    // Get recent orders (top 3)
-    const recentOrders = orders.slice(0, 3);
+    const recentOrders = earningsRows.slice(0, 3).map(e => ({
+        id: e.order.id,
+        orderNumber: e.order.orderNumber,
+        status: e.order.status,
+        total: e.order.total,
+        discount: e.order.discount,
+        createdAt: e.order.createdAt,
+        couponCode: e.coupon?.code,
+        commissionEarned: parseFloat(e.amount),
+        commissionPercent: e.percentage,
+        coupon: {
+            couponPartners: [{ commission: e.percentage }]
+        }
+    }));
 
     res.status(200).json(new ApiResponsive(200, {
         stats: {
@@ -175,7 +192,10 @@ export const getPartnerCoupons = asyncHandler(async (req, res) => {
             let actualEarnings = 0;
             ordersForCoupon.forEach(order => {
                 const orderAmount = parseFloat(order.total || 0);
-                const commissionRate = order.coupon?.couponPartners[0]?.commission || couponPartner.commission || 0;
+                // Assigned partner–coupon row is source of truth for commission %
+                const commissionRate = Number(
+                    couponPartner.commission ?? order.coupon?.couponPartners?.[0]?.commission ?? 0
+                );
                 actualEarnings += (orderAmount * commissionRate) / 100;
             });
 
@@ -351,10 +371,11 @@ export const getPartnerEarningsEnhanced = asyncHandler(async (req, res) => {
         }
     }
 
-    // Get detailed earnings
+    // Only earnings tied to DELIVERED orders (same rows admin creates on delivery)
     const earnings = await prisma.partnerEarning.findMany({
         where: {
             partnerId,
+            order: { status: 'DELIVERED' },
             ...dateFilter
         },
         include: {
@@ -380,9 +401,11 @@ export const getPartnerEarningsEnhanced = asyncHandler(async (req, res) => {
         orderBy: { createdAt: 'desc' }
     });
 
-    // Calculate total earnings for summary
     const allEarnings = await prisma.partnerEarning.findMany({
-        where: { partnerId },
+        where: {
+            partnerId,
+            order: { status: 'DELIVERED' }
+        },
         include: {
             order: { select: { createdAt: true } }
         }
@@ -420,24 +443,25 @@ export const getPartnerEarningsEnhanced = asyncHandler(async (req, res) => {
         monthlyEarningsMap[key].totalOrders += 1;
     });
 
-    // Use database monthly earnings if available, otherwise use calculated ones
-    let monthlyEarnings;
-    if (dbMonthlyEarnings.length > 0) {
-        monthlyEarnings = dbMonthlyEarnings.map(monthly => ({
-            year: monthly.year,
-            month: monthly.month,
-            totalAmount: parseFloat(monthly.totalAmount),
-            totalOrders: monthly.totalOrders,
-            paymentStatus: monthly.paymentStatus,
-            paidAt: monthly.paidAt
-        }));
-    } else {
-        // Convert to array and sort by year/month desc
-        monthlyEarnings = Object.values(monthlyEarningsMap).sort((a, b) => {
-            if (a.year !== b.year) return b.year - a.year;
-            return b.month - a.month;
-        });
-    }
+    // Always aggregate months from actual PartnerEarning rows, then overlay payment status from PartnerMonthlyEarning
+    const calculatedMonths = Object.values(monthlyEarningsMap).sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return b.month - a.month;
+    });
+    const dbMonthlyByKey = new Map(
+        dbMonthlyEarnings.map(m => [`${m.year}-${m.month}`, m])
+    );
+    const monthlyEarnings = calculatedMonths.map(calc => {
+        const dbRow = dbMonthlyByKey.get(`${calc.year}-${calc.month}`);
+        return {
+            year: calc.year,
+            month: calc.month,
+            totalAmount: calc.totalAmount,
+            totalOrders: calc.totalOrders,
+            paymentStatus: dbRow?.paymentStatus ?? 'PENDING',
+            paidAt: dbRow?.paidAt ?? null
+        };
+    });
 
     // Calculate summary with proper paid/pending amounts
     const totalEarnings = allEarnings.reduce((sum, earning) => sum + parseFloat(earning.amount), 0);

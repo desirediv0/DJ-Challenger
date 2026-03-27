@@ -20,7 +20,11 @@ export default function PartnerPage() {
     useEffect(() => {
         async function fetchNonApprovedCount() {
             try {
-                const response = await axios.get(`${API_URL}/api/admin/partners/requests/count/non-approved`);
+                const response = await axios.get(`${API_URL}/api/admin/partners/requests/count/non-approved`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                });
                 setNonApprovedCount(response.data.data.count || 0);
             } catch (error) {
                 console.error("Failed to fetch non-approved count:", error);

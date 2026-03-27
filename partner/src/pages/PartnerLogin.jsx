@@ -145,14 +145,14 @@ const PartnerLogin = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#DE7A3E]/[0.12] via-white/40 to-[#7596DB]/[0.18]">
             <div className="max-w-md w-full space-y-8">
                 {/* Logo and Header */}
                 <div className="text-center">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-[#DE7A3E] to-red-500 bg-clip-text text-transparent">
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] bg-clip-text text-transparent">
                         DJ Challenger
                     </h2>
-                    <h3 className="text-xl font-semibold text-gray-800 mt-2">
+                    <h3 className="text-xl font-semibold text-gray-900 mt-2">
                         {t('login_title')}
                     </h3>
                     <p className="mt-2 text-sm text-gray-600">
@@ -160,9 +160,9 @@ const PartnerLogin = () => {
                     </p>
                 </div>
 
-                <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="text-center pb-6 bg-gradient-to-r from-[#DE7A3E]/10 to-red-500/10 rounded-t-lg">
-                        <CardTitle className="text-2xl font-bold text-gray-800">Welcome Back</CardTitle>
+                <Card className="shadow-xl border border-white/50 bg-white/65 backdrop-blur-md rounded-xl overflow-hidden">
+                    <CardHeader className="text-center pb-6 bg-gradient-to-r from-[#DE7A3E]/[0.08] to-[#7596DB]/[0.12] border-b border-white/40">
+                        <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
                         <p className="text-gray-600">Enter your credentials to continue</p>
                     </CardHeader>
                     <CardContent className="p-8">
@@ -181,7 +181,7 @@ const PartnerLogin = () => {
                                         value={formData.email}
                                         onChange={handleInputChange}
                                         placeholder="Enter your email"
-                                        className="h-12 border-2 border-gray-200 focus:border-[#DE7A3E] focus:ring-[#DE7A3E]/20 transition-all duration-200"
+                                        className="h-12 border border-gray-200/90 bg-white/80 text-gray-900 placeholder:text-gray-400 focus:border-[#DE7A3E] focus:ring-2 focus:ring-[#7596DB]/25 transition-all duration-200"
                                     />
                                 </div>
 
@@ -199,13 +199,13 @@ const PartnerLogin = () => {
                                             value={formData.password}
                                             onChange={handleInputChange}
                                             placeholder="Enter your password"
-                                            className="h-12 pr-12 border-2 border-gray-200 focus:border-[#DE7A3E] focus:ring-[#DE7A3E]/20 transition-all duration-200"
+                                            className="h-12 pr-12 border border-gray-200/90 bg-white/80 text-gray-900 placeholder:text-gray-400 focus:border-[#DE7A3E] focus:ring-2 focus:ring-[#7596DB]/25 transition-all duration-200"
                                         />
                                         <Button
                                             type="button"
                                             variant="ghost"
                                             size="icon"
-                                            className="absolute right-1 top-1 h-10 w-10 text-gray-500 hover:text-[#DE7A3E] transition-colors"
+                                            className="absolute right-1 top-1 h-10 w-10 text-gray-500 hover:text-[#7596DB] transition-colors"
                                             onClick={() => setShowPassword(!showPassword)}
                                         >
                                             {showPassword ? (
@@ -220,7 +220,7 @@ const PartnerLogin = () => {
 
                             <Button
                                 type="submit"
-                                className="w-full h-12 bg-gradient-to-r from-[#DE7A3E] to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                                className="w-full h-12 bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] hover:from-[#c96a35] hover:to-[#5a7fc4] text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
@@ -238,7 +238,7 @@ const PartnerLogin = () => {
                             <button
                                 type="button"
                                 onClick={() => setShowForgotPassword(true)}
-                                className="text-sm text-[#DE7A3E] hover:text-red-500 underline font-medium transition-colors duration-200"
+                                className="text-sm text-[#5a6d9e] hover:text-[#DE7A3E] underline font-medium transition-colors duration-200"
                             >
                                 {t('forgot_password')}
                             </button>
@@ -250,7 +250,7 @@ const PartnerLogin = () => {
                                 href="https://djchallenger.in/become-partner"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[#DE7A3E] hover:underline font-medium"
+                                className="text-[#DE7A3E] hover:text-[#7596DB] underline-offset-2 hover:underline font-medium"
                             >
                                 {t('apply_link')}
                             </a>
@@ -260,7 +260,7 @@ const PartnerLogin = () => {
 
                 {/* Password Change Dialog */}
                 <Dialog open={showPasswordChange} onOpenChange={setShowPasswordChange}>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-[425px] border border-white/50 bg-white/90 backdrop-blur-md">
                         <DialogHeader>
                             <DialogTitle className="text-xl font-bold text-gray-800 flex items-center">
                                 <span className="w-3 h-3 bg-[#DE7A3E] rounded-full mr-2"></span>
@@ -280,7 +280,7 @@ const PartnerLogin = () => {
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     placeholder="Minimum 6 characters"
-                                    className="mt-1 h-11 border-2 border-gray-200 focus:border-[#DE7A3E] focus:ring-[#DE7A3E]/20"
+                                    className="mt-1 h-11 border border-gray-200 bg-white/90 focus:border-[#DE7A3E] focus:ring-2 focus:ring-[#7596DB]/20"
                                     required
                                 />
                             </div>
@@ -293,7 +293,7 @@ const PartnerLogin = () => {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="Re-enter your new password"
-                                    className="mt-1 h-11 border-2 border-gray-200 focus:border-[#DE7A3E] focus:ring-[#DE7A3E]/20"
+                                    className="mt-1 h-11 border border-gray-200 bg-white/90 focus:border-[#DE7A3E] focus:ring-2 focus:ring-[#7596DB]/20"
                                     required
                                 />
                             </div>
@@ -310,7 +310,7 @@ const PartnerLogin = () => {
                                 <Button
                                     type="submit"
                                     disabled={passwordChangeLoading}
-                                    className="bg-gradient-to-r from-[#DE7A3E] to-red-500 hover:from-orange-600 hover:to-red-600"
+                                    className="bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] hover:from-[#c96a35] hover:to-[#5a7fc4] text-white"
                                 >
                                     {passwordChangeLoading ? (
                                         <>
@@ -328,10 +328,10 @@ const PartnerLogin = () => {
 
                 {/* Forgot Password Dialog */}
                 <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-[425px] border border-white/50 bg-white/90 backdrop-blur-md">
                         <DialogHeader>
-                            <DialogTitle className="text-xl font-bold text-gray-800 flex items-center">
-                                <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                            <DialogTitle className="text-xl font-bold text-gray-900 flex items-center">
+                                <span className="w-3 h-3 bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] rounded-full mr-2"></span>
                                 Reset Password
                             </DialogTitle>
                             <DialogDescription className="text-gray-600">
@@ -348,7 +348,7 @@ const PartnerLogin = () => {
                                     value={forgotEmail}
                                     onChange={(e) => setForgotEmail(e.target.value)}
                                     placeholder="Enter your registered email"
-                                    className="mt-1 h-11 border-2 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
+                                    className="mt-1 h-11 border border-gray-200 bg-white/90 focus:border-[#DE7A3E] focus:ring-2 focus:ring-[#7596DB]/20"
                                     required
                                 />
                             </div>
@@ -358,14 +358,14 @@ const PartnerLogin = () => {
                                     type="button"
                                     variant="outline"
                                     onClick={() => setShowForgotPassword(false)}
-                                    className="mr-2"
+                                    className="mr-2 border-gray-200"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     type="submit"
                                     disabled={forgotLoading}
-                                    className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
+                                    className="bg-gradient-to-r from-[#DE7A3E] to-[#7596DB] hover:from-[#c96a35] hover:to-[#5a7fc4] text-white"
                                 >
                                     {forgotLoading ? (
                                         <>

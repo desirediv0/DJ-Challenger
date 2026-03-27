@@ -35,12 +35,19 @@ class ApiService {
         }
     }
 
-    // Auth APIs
+    // Auth APIs (no Bearer token — avoids stale partnerToken breaking login)
     async login(credentials) {
-        return this.request('/api/partner/auth/login', {
+        const url = `${this.baseURL}/api/partner/auth/login`;
+        const response = await fetch(url, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials)
         });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'Login failed');
+        }
+        return data;
     }
 
     async changePassword(passwordData) {
@@ -51,17 +58,27 @@ class ApiService {
     }
 
     async forgotPassword(email) {
-        return this.request('/api/partner/auth/forgot-password', {
+        const url = `${this.baseURL}/api/partner/auth/forgot-password`;
+        const response = await fetch(url, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
         });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Request failed');
+        return data;
     }
 
     async resetPassword(resetData) {
-        return this.request('/api/partner/auth/reset-password', {
+        const url = `${this.baseURL}/api/partner/auth/reset-password`;
+        const response = await fetch(url, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(resetData)
         });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Request failed');
+        return data;
     }
 
     async getProfile() {

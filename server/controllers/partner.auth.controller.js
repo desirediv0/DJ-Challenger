@@ -18,9 +18,14 @@ export const partnerLogin = asyncHandler(async (req, res) => {
             return res.status(400).json(new ApiResponsive(400, null, 'Email and password are required'));
         }
 
-        // Find partner
-        const partner = await prisma.partner.findUnique({
-            where: { email, isActive: true }
+        const emailNormalized = String(email).trim().toLowerCase();
+
+        // Find partner (email stored as submitted; match case-insensitively via findFirst)
+        const partner = await prisma.partner.findFirst({
+            where: {
+                email: { equals: emailNormalized, mode: 'insensitive' },
+                isActive: true
+            }
         });
 
         if (!partner) {

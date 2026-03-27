@@ -16,6 +16,10 @@ import { useLanguage } from "@/context/LanguageContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const adminAuthHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+});
+
 type PartnerRequest = {
     id: string;
     name: string;
@@ -111,7 +115,9 @@ export default function PartnerRegistrationsPage() {
         setRemovingCouponId(couponId);
         setRemoveCouponError("");
         try {
-            await axios.delete(`${API_URL}/api/admin/partners/${partnerId}/coupons/${couponId}`);
+            await axios.delete(`${API_URL}/api/admin/partners/${partnerId}/coupons/${couponId}`, {
+                headers: adminAuthHeaders(),
+            });
             setPartnerDetails((prev) => prev ? { ...prev, coupons: prev.coupons.filter(c => c.id !== couponId) } : prev);
         } catch {
             setRemoveCouponError("Failed to remove coupon.");
@@ -157,7 +163,11 @@ export default function PartnerRegistrationsPage() {
         setPasswordError("");
         setApproveApiError("");
         try {
-            await axios.post(`${API_URL}/api/admin/partners/requests/${approveId}/approve`, { password });
+            await axios.post(
+                `${API_URL}/api/admin/partners/requests/${approveId}/approve`,
+                { password },
+                { headers: adminAuthHeaders() }
+            );
             setRequests((prev) => prev.map((r) => r.id === approveId ? { ...r, status: "APPROVED" } : r));
             setApprovedPassword(password);
             setShowPasswordDialog(true);
@@ -176,7 +186,7 @@ export default function PartnerRegistrationsPage() {
     const handleReject = async (id: string) => {
         if (!window.confirm(t('partner_management.registrations.confirm_reject') || "Are you sure you want to reject this request?")) return;
         try {
-            await axios.post(`${API_URL}/api/admin/partners/requests/${id}/reject`);
+            await axios.post(`${API_URL}/api/admin/partners/requests/${id}/reject`, {}, { headers: adminAuthHeaders() });
             setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "REJECTED" } : r));
         } catch {
             alert("Failed to reject partner.");
@@ -186,7 +196,9 @@ export default function PartnerRegistrationsPage() {
     useEffect(() => {
         async function fetchRequests() {
             try {
-                const res = await axios.get(`${API_URL}/api/admin/partners/requests`);
+                const res = await axios.get(`${API_URL}/api/admin/partners/requests`, {
+                    headers: adminAuthHeaders(),
+                });
                 setRequests(res.data.data.requests || []);
             } catch {
                 setError(t('partner_management.registrations.fetch_error') || "Failed to fetch partner registrations");

@@ -247,7 +247,7 @@ const PartnerDashboard = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                                        m.paymentStatus === 'PAID'
+                                                        m.paymentStatus === 'PAID' || m.paymentStatus === 'CONFIRMED'
                                                             ? 'bg-green-100 text-green-800'
                                                             : 'bg-orange-100 text-orange-800'
                                                     }`}>
@@ -295,7 +295,11 @@ const PartnerDashboard = () => {
                                     <div className="text-right">
                                         <p className="font-bold text-lg">{formatCurrency(order.total)}</p>
                                         <p className="text-sm text-green-600 font-medium">
-                                            Commission: {formatCurrency((parseFloat(order.total) * (order.coupon?.couponPartners[0]?.commission || stats.commissionRate)) / 100)}
+                                            Commission: {formatCurrency(
+                                                order.commissionEarned != null
+                                                    ? order.commissionEarned
+                                                    : (parseFloat(order.total) * (order.coupon?.couponPartners[0]?.commission || stats.commissionRate || 0)) / 100
+                                            )}
                                         </p>
                                         <p className="text-xs text-gray-500">
                                             Discount: {formatCurrency(order.discount || 0)}
