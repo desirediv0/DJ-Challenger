@@ -12,24 +12,24 @@ const companyLinks = [
   { name: "Contact", href: "/contact" },
 ];
 
-const PARTNER_PORTAL_URL = process.env.NEXT_PUBLIC_PARTNER_URL || 'http://localhost:5000';
+const PARTNER_PORTAL_URL = process.env.NEXT_PUBLIC_PARTNER_URL || 'https://partner.djchallenger.in/login';
 
 const socialLinks = [
-  { 
-    name: "Instagram", 
-    href: "https://www.instagram.com/official_djchallenger/", 
+  {
+    name: "Instagram",
+    href: "https://www.instagram.com/official_djchallenger/",
     icon: Instagram,
     color: "hover:bg-gradient-to-br hover:from-purple-500 hover:via-pink-500 hover:to-orange-400"
   },
-  { 
-    name: "Facebook", 
-    href: "https://www.facebook.com/share/1DCsKYB5Uy/?mibextid=wwXIfr", 
+  {
+    name: "Facebook",
+    href: "https://www.facebook.com/share/1DCsKYB5Uy/?mibextid=wwXIfr",
     icon: Facebook,
     color: "hover:bg-blue-600"
   },
-  { 
-    name: "YouTube", 
-    href: "https://youtube.com/@djchallengerindia?si=ZkkCpU1DEh48NBSe", 
+  {
+    name: "YouTube",
+    href: "https://youtube.com/@djchallengerindia?si=ZkkCpU1DEh48NBSe",
     icon: Youtube,
     color: "hover:bg-red-600"
   },
@@ -75,13 +75,13 @@ export const Footer = () => {
             <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-sm">
               India&apos;s leading manufacturer of professional audio equipment since 1998. Factory direct pricing, quality guaranteed.
             </p>
-            
+
             {/* Social Icons */}
             <div className="flex gap-3">
               {socialLinks.map((social) => (
-                <a 
+                <a
                   key={social.name}
-                  href={social.href} 
+                  href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`w-10 h-10 rounded-full bg-white/10 flex items-center justify-center transition-all duration-300 ${social.color}`}
@@ -234,9 +234,9 @@ export const Footer = () => {
               <p className="text-xs text-gray-500 mb-3">Follow us on social media</p>
               <div className="flex gap-2">
                 {socialLinks.map((social) => (
-                  <a 
+                  <a
                     key={social.name}
-                    href={social.href} 
+                    href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-gray-400 hover:text-primary text-xs transition-colors"
@@ -256,7 +256,7 @@ export const Footer = () => {
               © {new Date().getFullYear()} DJ-Challenger. All rights reserved.
             </p>
           </div>
-          
+
           {/* Payment Icons */}
           <div className="flex items-center gap-4">
             <span className="text-gray-500 text-xs">We accept:</span>
