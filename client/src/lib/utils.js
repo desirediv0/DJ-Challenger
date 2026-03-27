@@ -6,9 +6,12 @@ export function cn(...inputs) {
 }
 
 
-// API URL
+// API URL — must match backend (server often runs on 5000). Set NEXT_PUBLIC_API_URL in .env.local
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === "development" ? "http://localhost:4000/api" : "https://djchallenger.in/api");
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:4000/api"
+    : "https://djchallenger.in/api");
 
 // Track in-flight requests to prevent duplicates
 const pendingRequests = {};

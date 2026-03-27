@@ -145,6 +145,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
   delete userWithoutPassword.password;
   delete userWithoutPassword.otp;
 
+  let emailSent = false;
   // Send OTP email
   try {
     await sendEmail({
@@ -153,22 +154,31 @@ export const registerUser = asyncHandler(async (req, res, next) => {
       html: getEmailOtpTemplate(otpCode, 10),
     });
 
-    // Log only recipient email — do NOT log the OTP code
     console.log("Verification OTP sent to:", email);
+    emailSent = true;
   } catch (error) {
     console.error("Error sending verification email:", error);
-    // Don't throw error, still allow registration
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "[dev] OTP email failed — use debugOtp in API response or fix SMTP. Recipient was:",
+        email
+      );
+    }
   }
 
-  res
-    .status(201)
-    .json(
-      new ApiResponsive(
-        201,
-        userWithoutPassword,
-        "User registered successfully. Please verify with the OTP sent to your email."
-      )
-    );
+  const responsePayload = {
+    ...userWithoutPassword,
+    emailSent,
+  };
+  if (process.env.NODE_ENV !== "production" && !emailSent) {
+    responsePayload.debugOtp = otpCode;
+  }
+
+  const message = emailSent
+    ? "User registered successfully. Please verify with the OTP sent to your email."
+    : "Account created. We could not send the verification email. In development, use the OTP shown on screen or check server logs; otherwise use Resend OTP after configuring SMTP.";
+
+  res.status(201).json(new ApiResponsive(201, responsePayload, message));
 });
 
 // Login user

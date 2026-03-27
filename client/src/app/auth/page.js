@@ -253,14 +253,30 @@ function RegisterForm() {
         setIsSubmitting(true);
 
         try {
-            await register({
+            const res = await register({
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
                 password: formData.password,
             });
 
-            toast.success("Registration successful! Enter the OTP sent to your email.", { duration: 3000 });
+            const payload = res?.data ?? res;
+            const emailSent = payload?.emailSent !== false;
+
+            if (payload?.debugOtp) {
+                toast.success(
+                    `Verification code (dev — email failed): ${payload.debugOtp}`,
+                    { duration: 25000 }
+                );
+            } else if (emailSent) {
+                toast.success(
+                    "Registration successful! Check your email for the 6-digit OTP.",
+                    { duration: 4000 }
+                );
+            } else {
+                toast.warning(res?.message || "Account created but email could not be sent. Use Resend OTP or check SMTP settings.");
+            }
+
             localStorage.setItem("registeredEmail", formData.email);
 
             setTimeout(() => {
