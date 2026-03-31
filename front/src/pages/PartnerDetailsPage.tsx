@@ -17,11 +17,13 @@ import {
     Filter,
     Download,
     Eye,
-    AlertTriangle
+    AlertTriangle,
+    RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { partners } from "@/api/adminService";
 import { useLanguage } from "@/context/LanguageContext";
+
 
 interface MonthlyEarning {
     id: string;
@@ -220,75 +222,114 @@ export default function PartnerDetailsPage() {
         return (
             <div className="flex h-full w-full flex-col items-center justify-center py-10">
                 <AlertTriangle className="h-16 w-16 text-red-500" />
-                <h2 className="mt-4 text-xl font-semibold">{t('partner_management.details.not_found.title')}</h2>
-                <p className="text-gray-600">{t('partner_management.details.not_found.description')}</p>
+                <h2 className="mt-4 text-xl font-semibold">Partner Not Found</h2>
+                <p className="text-gray-600">This partner could not be loaded.</p>
                 <Button className="mt-4" onClick={() => navigate("/partner")}>
-                    {t('partner_management.details.back_button')}
+                    Back to Partners
                 </Button>
             </div>
         );
     }
 
+    // ── Derived monthly values ───────────────────────────────────
+    const now = new Date();
+    const thisYear = now.getFullYear();
+    const thisMonthNum = now.getMonth() + 1;
+    const lastMonthNum = now.getMonth() === 0 ? 12 : now.getMonth();
+    const lastMonthYear = now.getMonth() === 0 ? thisYear - 1 : thisYear;
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    const thisMonthEntry = partner.monthlyEarnings?.find(m => m.year === thisYear && m.month === thisMonthNum);
+    const lastMonthEntry = partner.monthlyEarnings?.find(m => m.year === lastMonthYear && m.month === lastMonthNum);
+
+    const thisMonthAmount = parseFloat(String(thisMonthEntry?.totalAmount || 0));
+    const lastMonthAmount = parseFloat(String(lastMonthEntry?.totalAmount || 0));
+    const lastMonthPaid = lastMonthEntry?.paymentStatus === 'PAID';
+    // ────────────────────────────────────────────────────────────
+
     return (
         <div className="space-y-6 p-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <Button variant="ghost" size="sm" onClick={() => navigate("/partner")}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        {t('partner_management.details.back_button')}
+                        Back
                     </Button>
-                    <Button variant="outline" size="sm" onClick={refreshPartnerData}>
-                        {t('partner_management.details.refresh_button')}
+                    <Button variant="outline" size="sm" onClick={refreshPartnerData} className="gap-1.5">
+                        <RefreshCw className="h-4 w-4" />
+                        Refresh
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold">{partner.name}</h1>
-                        <p className="text-gray-600">{t('partner_management.details.header_subtitle')}</p>
+                        <h1 className="text-xl font-bold">{partner.name}</h1>
+                        <p className="text-sm text-gray-500">Partner Details & Payment Management</p>
                     </div>
                 </div>
-                <Badge variant={partner.isActive ? "default" : "secondary"}>
-                    {partner.isActive ? t('partner_management.details.badges.active') : t('partner_management.details.badges.inactive')}
+                <Badge variant={partner.isActive ? "default" : "secondary"} className="text-sm">
+                    {partner.isActive ? 'Active' : 'Inactive'}
                 </Badge>
             </div>
 
-            {/* Partner Info Cards */}
+            {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="p-4">
+                {/* Total Earnings */}
+                <Card className="p-5 border-l-4 border-l-blue-500">
                     <div className="flex items-center gap-3">
-                        <IndianRupee className="h-8 w-8 text-green-600" />
-                        <div>
-                            <p className="text-sm text-gray-600">{t('partner_management.details.stats.total_earnings')}</p>
-                            <p className="text-2xl font-bold">₹{partner.totalEarnings?.toLocaleString() || 0}</p>
+                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <IndianRupee className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs text-gray-500">Total Earnings</p>
+                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{parseFloat(String(partner.totalEarnings || 0)).toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-4">
+                {/* This Month */}
+                <Card className="p-5 border-l-4 border-l-orange-400">
                     <div className="flex items-center gap-3">
-                        <Clock className="h-8 w-8 text-orange-600" />
-                        <div>
-                            <p className="text-sm text-gray-600">{t('partner_management.details.stats.pending_amount')}</p>
-                            <p className="text-2xl font-bold">₹{partner.pendingAmount?.toLocaleString() || 0}</p>
+                        <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                            <TrendingUp className="h-5 w-5 text-orange-500" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs text-gray-500">This Month ({monthNames[thisMonthNum-1]})</p>
+                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{thisMonthAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-4">
+                {/* Last Month */}
+                <Card className={`p-5 border-l-4 ${lastMonthPaid ? 'border-l-green-500' : 'border-l-amber-400'}`}>
                     <div className="flex items-center gap-3">
-                        <CheckCircle className="h-8 w-8 text-blue-600" />
-                        <div>
-                            <p className="text-sm text-gray-600">{t('partner_management.details.stats.paid_amount')}</p>
-                            <p className="text-2xl font-bold">₹{partner.paidAmount?.toLocaleString() || 0}</p>
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${lastMonthPaid ? 'bg-green-50' : 'bg-amber-50'}`}>
+                            {lastMonthPaid
+                                ? <CheckCircle className="h-5 w-5 text-green-600" />
+                                : <Clock className="h-5 w-5 text-amber-500" />
+                            }
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <p className="text-xs text-gray-500">Last Month ({monthNames[lastMonthNum-1]})</p>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${lastMonthPaid ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {lastMonthPaid ? 'PAID' : 'PENDING'}
+                                </span>
+                            </div>
+                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{lastMonthAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
                         </div>
                     </div>
                 </Card>
 
-                <Card className="p-4">
+                {/* Pending Amount */}
+                <Card className={`p-5 border-l-4 ${parseFloat(String(partner.pendingAmount||0)) > 0 ? 'border-l-red-400' : 'border-l-gray-200'}`}>
                     <div className="flex items-center gap-3">
-                        <TrendingUp className="h-8 w-8 text-purple-600" />
-                        <div>
-                            <p className="text-sm text-gray-600">{t('partner_management.details.stats.total_orders')}</p>
-                            <p className="text-2xl font-bold">{partner.totalOrders || 0}</p>
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${parseFloat(String(partner.pendingAmount||0)) > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
+                            <Clock className={`h-5 w-5 ${parseFloat(String(partner.pendingAmount||0)) > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs text-gray-500">Pending Amount</p>
+                            <p className={`text-xl font-bold truncate ${parseFloat(String(partner.pendingAmount||0)) > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                                &#8377;{parseFloat(String(partner.pendingAmount || 0)).toLocaleString('en-IN', {minimumFractionDigits:2})}
+                            </p>
                         </div>
                     </div>
                 </Card>
@@ -415,71 +456,84 @@ export default function PartnerDetailsPage() {
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="border-b bg-gray-50">
-                                <th className="px-4 py-3 text-left text-sm font-medium">{t('partner_management.details.earnings.table.month')}</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">{t('partner_management.details.earnings.table.orders')}</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">{t('partner_management.details.earnings.table.amount')}</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">{t('partner_management.details.earnings.table.status')}</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">{t('partner_management.details.earnings.table.paid_date')}</th>
-                                <th className="px-4 py-3 text-right text-sm font-medium">{t('partner_management.details.earnings.table.actions')}</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Month</th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Orders</th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Paid On</th>
+                                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredEarnings.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                                        {t('partner_management.details.earnings.table.empty')}
+                                    <td colSpan={6} className="px-4 py-10 text-center text-gray-400 text-sm">
+                                        No earnings for the selected period.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredEarnings.map((earning) => (
-                                    <tr key={earning.id} className="border-b hover:bg-gray-50">
+                                    <tr key={earning.id} className={`border-b transition-colors ${
+                                        earning.paymentStatus === 'PAID' ? 'bg-green-50 hover:bg-green-100/60' : 'hover:bg-gray-50'
+                                    }`}>
                                         <td className="px-4 py-3">
-                                            <div className="font-medium">
+                                            <div className="font-semibold text-sm text-gray-900">
                                                 {getMonthName(earning.month)} {earning.year}
                                             </div>
+                                            {earning.notes && earning.paymentStatus === 'PAID' && (
+                                                <div className="text-xs text-gray-500 italic mt-0.5 max-w-[200px] truncate" title={earning.notes}>
+                                                    {earning.notes}
+                                                </div>
+                                            )}
                                         </td>
-                                        <td className="px-4 py-3">{earning.totalOrders}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="font-medium">₹{earning.totalAmount.toLocaleString()}</div>
+                                        <td className="px-4 py-3 text-right">
+                                            <span className="font-bold text-sm text-gray-900">&#8377;{parseFloat(String(earning.totalAmount)).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <Badge
-                                                variant={
-                                                    earning.paymentStatus === 'PAID' ? 'default' :
-                                                        earning.paymentStatus === 'PENDING' ? 'secondary' : 'destructive'
-                                                }
-                                            >
-                                                {earning.paymentStatus}
-                                            </Badge>
+                                        <td className="px-4 py-3 text-right text-sm text-gray-700">{earning.totalOrders}</td>
+                                        <td className="px-4 py-3 text-center">
+                                            {earning.paymentStatus === 'PAID' ? (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                                                    <CheckCircle className="h-3.5 w-3.5" /> Paid
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                                    <Clock className="h-3.5 w-3.5" /> Pending
+                                                </span>
+                                            )}
                                         </td>
-                                        <td className="px-4 py-3">
-                                            {earning.paidAt ? new Date(earning.paidAt).toLocaleDateString() : '-'}
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            {earning.paidAt
+                                                ? <span className="text-green-700 font-medium">{new Date(earning.paidAt).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'})}</span>
+                                                : <span className="text-gray-300">—</span>
+                                            }
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             {earning.paymentStatus === 'PENDING' && (
                                                 <div className="flex items-center gap-2 justify-end">
                                                     <Input
-                                                        placeholder={t('partner_management.details.earnings.payment_notes_placeholder')}
+                                                        placeholder="Payment note"
                                                         value={paymentNotesMap[earning.id] || ''}
                                                         onChange={(e) => setPaymentNotesMap(prev => ({ ...prev, [earning.id]: e.target.value }))}
-                                                        className="w-32 text-xs"
+                                                        className="w-36 text-xs h-8"
                                                     />
                                                     <Button
                                                         size="sm"
+                                                        className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white text-xs gap-1"
                                                         onClick={() => handleMarkAsPaid(earning.id, earning.year, earning.month)}
                                                         disabled={isProcessingPayment === earning.id}
                                                     >
                                                         {isProcessingPayment === earning.id ? (
-                                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                                            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                         ) : (
-                                                            <CheckCircle className="h-4 w-4" />
+                                                            <CheckCircle className="h-3.5 w-3.5" />
                                                         )}
+                                                        Mark Paid
                                                     </Button>
                                                 </div>
                                             )}
-                                            {earning.paymentStatus === 'PAID' && earning.notes && (
-                                                <Button variant="ghost" size="sm" title={earning.notes}>
-                                                    <Eye className="h-4 w-4" />
+                                            {earning.paymentStatus === 'PAID' && (
+                                                <Button variant="ghost" size="sm" className="h-8 text-gray-400 hover:text-gray-600" title={earning.notes || 'Paid'}>
+                                                    <Eye className="h-3.5 w-3.5" />
                                                 </Button>
                                             )}
                                         </td>

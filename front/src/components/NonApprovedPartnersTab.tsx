@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import { formatDate } from "@/lib/utils";
@@ -6,8 +6,10 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { CheckCircle, Copy, AlertTriangle } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -45,6 +47,13 @@ export default function NonApprovedPartnersTab() {
     const [approveId, setApproveId] = useState<string | null>(null);
     const [approveLoading, setApproveLoading] = useState(false);
     const [approveApiError, setApproveApiError] = useState("");
+    const [customPassword, setCustomPassword] = useState("djchallenger");
+    const [passwordCopied, setPasswordCopied] = useState(false);
+
+    // Success dialog after approval
+    const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+    const [approvedPassword, setApprovedPassword] = useState("");
+    const successInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         async function fetchNonApprovedPartners() {
@@ -72,6 +81,8 @@ export default function NonApprovedPartnersTab() {
     const openApproveDialog = (id: string) => {
         setApproveId(id);
         setApproveApiError("");
+        setCustomPassword("djchallenger");
+        setPasswordCopied(false);
         setApproveDialogOpen(true);
     };
 
@@ -79,17 +90,18 @@ export default function NonApprovedPartnersTab() {
         setApproveDialogOpen(false);
         setApproveId(null);
         setApproveApiError("");
+        setCustomPassword("djchallenger");
     };
 
     const handleApprove = async () => {
-        if (!window.confirm(t("partners_tab.non_approved.confirm_approve"))) return;
+        const passwordToSend = customPassword.trim().length >= 6 ? customPassword.trim() : "djchallenger";
 
         setApproveLoading(true);
         setApproveApiError("");
         try {
             const response = await axios.post(
                 `${API_URL}/api/admin/partners/requests/${approveId}/approve`,
-                {},
+                { password: passwordToSend },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -100,9 +112,10 @@ export default function NonApprovedPartnersTab() {
             setPartners(prev => prev.filter(p => p.id !== approveId));
             closeApproveDialog();
 
-            // Show demo password to admin
-            const demoPassword = response.data.data.demoPassword || "PartnerPortal@123";
-            alert(t("partners_tab.non_approved.approve_success", { password: demoPassword }));
+            // Show confirmed password from backend in a proper dialog
+            const confirmedPassword = response.data.data?.demoPassword || passwordToSend;
+            setApprovedPassword(confirmedPassword);
+            setSuccessDialogOpen(true);
         } catch (err) {
             if (axios.isAxiosError(err)) {
                 setApproveApiError(err.response?.data?.message || t("partners_tab.non_approved.approve_error"));
@@ -350,7 +363,7 @@ export default function NonApprovedPartnersTab() {
                     <DialogHeader>
                         <DialogTitle>{t("partners_tab.non_approved.approve_title")}</DialogTitle>
                         <DialogDescription>
-                            {t("partners_tab.non_approved.approve_desc")}
+                            Set a demo password for this partner. They will log in with this password and be prompted to change it.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -361,37 +374,107 @@ export default function NonApprovedPartnersTab() {
                         </Alert>
                     )}
 
-                    <div className="bg-accent p-4 rounded-lg">
-                        <p className="font-semibold text-sm mb-2">{t("partners_tab.non_approved.demo_password")}:</p>
-                        <div className="flex items-center gap-2">
-                            <p className="font-mono text-lg bg-background px-3 py-2 rounded border">
-                                {import.meta.env.VITE_DEMO_PASSWORD || "djchallenger"}
-                            </p>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    navigator.clipboard.writeText(import.meta.env.VITE_DEMO_PASSWORD || "djchallenger");
-                                    alert(t("partners_tab.non_approved.copied_password"));
-                                }}
-                                title={t("partners_tab.non_approved.copy")}
-                            >
-                                📋
-                            </Button>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-1.5 block">Set Login Password for Partner</label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="text"
+                                    value={customPassword}
+                                    onChange={e => setCustomPassword(e.target.value)}
+                                    placeholder="Min 6 characters"
+                                    className="font-mono tracking-wider"
+                                    disabled={approveLoading}
+                                />
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(customPassword);
+                                        setPasswordCopied(true);
+                                        setTimeout(() => setPasswordCopied(false), 1500);
+                                    }}
+                                    title="Copy password"
+                                    className="shrink-0"
+                                >
+                                    {passwordCopied
+                                        ? <CheckCircle className="h-4 w-4 text-green-500" />
+                                        : <Copy className="h-4 w-4" />}
+                                </Button>
+                            </div>
+                            {customPassword.trim().length > 0 && customPassword.trim().length < 6 && (
+                                <p className="text-xs text-destructive mt-1.5">Password must be at least 6 characters.</p>
+                            )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                            {t("partners_tab.non_approved.demo_note")}
-                        </p>
+                        <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2.5">
+                            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+                            <span>Note this password carefully. Share it with the partner after approval. They can change it after first login.</span>
+                        </div>
                     </div>
 
                     <DialogFooter>
-                        <Button onClick={handleApprove} disabled={approveLoading}>
+                        <Button
+                            onClick={handleApprove}
+                            disabled={approveLoading || customPassword.trim().length < 6}
+                        >
                             {approveLoading ? t("partners_tab.non_approved.approving") : t("partners_tab.non_approved.approve_btn")}
                         </Button>
                         <DialogClose asChild>
                             <Button variant="outline" type="button" disabled={approveLoading}>
                                 {t("partners_tab.common.cancel")}
                             </Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Success Dialog - shows confirmed password after approval */}
+            <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            <span>Partner Approved Successfully</span>
+                        </DialogTitle>
+                        <DialogDescription>
+                            Share the password below with the partner so they can log in.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="rounded-xl border border-green-200 bg-green-50 p-4 space-y-3">
+                        <p className="text-xs font-semibold text-green-700 uppercase tracking-wider">Login Password</p>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                ref={successInputRef}
+                                value={approvedPassword}
+                                readOnly
+                                className="font-mono text-base font-bold bg-white border-green-300 text-green-900 tracking-widest"
+                            />
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="shrink-0 border-green-300 text-green-700 hover:bg-green-100"
+                                onClick={async () => {
+                                    await navigator.clipboard.writeText(approvedPassword);
+                                    setPasswordCopied(true);
+                                    setTimeout(() => setPasswordCopied(false), 1500);
+                                }}
+                            >
+                                {passwordCopied
+                                    ? <CheckCircle className="h-4 w-4 text-green-600" />
+                                    : <Copy className="h-4 w-4" />}
+                            </Button>
+                        </div>
+                        <div className="text-xs text-green-700 space-y-0.5">
+                            <p>Partner dashboard: <strong>partner.djchallenger.in</strong></p>
+                            <p>The partner can change this password after their first login.</p>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="default" type="button" className="w-full sm:w-auto">Done</Button>
                         </DialogClose>
                     </DialogFooter>
                 </DialogContent>
