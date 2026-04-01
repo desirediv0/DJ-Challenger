@@ -449,10 +449,10 @@ export const getPartnerEarningsEnhanced = asyncHandler(async (req, res) => {
         return b.month - a.month;
     });
     const dbMonthlyByKey = new Map(
-        dbMonthlyEarnings.map(m => [`${m.year}-${m.month}`, m])
+        dbMonthlyEarnings.map(m => [`${m.year}-${String(m.month).padStart(2, '0')}`, m])
     );
     const monthlyEarnings = calculatedMonths.map(calc => {
-        const dbRow = dbMonthlyByKey.get(`${calc.year}-${calc.month}`);
+        const dbRow = dbMonthlyByKey.get(`${calc.year}-${String(calc.month).padStart(2, '0')}`);
         return {
             year: calc.year,
             month: calc.month,

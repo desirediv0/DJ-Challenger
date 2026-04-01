@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { DollarSign, Ticket, TrendingUp, Users, BarChart3, User, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { IndianRupee, Ticket, TrendingUp, Users, BarChart3, User, Calendar, Clock, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import apiService from '@/services/apiService';
 import { toast } from 'sonner';
@@ -91,7 +91,7 @@ const PartnerDashboard = () => {
         {
             title: 'Total Commission Earned',
             value: formatCurrency(stats.estimatedCommission || 0),
-            icon: DollarSign,
+            icon: IndianRupee,
             color: 'text-green-600',
             bgColor: 'bg-green-50'
         },

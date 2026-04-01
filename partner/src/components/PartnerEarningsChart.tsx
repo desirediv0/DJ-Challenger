@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { useLang } from "../context/LangContext";
 import axios from "axios";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
 import {
     LineChart,
     Line,
@@ -14,9 +18,15 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    Legend,
     ResponsiveContainer
 } from "recharts";
+import { CheckCircle, AlertCircle, Clock, IndianRupee, TrendingUp } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
+const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -44,24 +54,18 @@ interface EarningsChartProps {
 }
 
 export default function PartnerEarningsChart({ filters = {} }: EarningsChartProps) {
-    const { lang } = useLang();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [monthlyData, setMonthlyData] = useState<MonthlyEarning[]>([]);
-    const [totalEarnings, setTotalEarnings] = useState(0);
-    const [thisYearEarnings, setThisYearEarnings] = useState(0);
     const [lastMonthEarnings, setLastMonthEarnings] = useState(0);
     const [thisMonthEarnings, setThisMonthEarnings] = useState(0);
-    const [pendingAmount, setPendingAmount] = useState(0);
 
-    // Payment confirmation dialog
+    // Payment confirmation dialog states
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState<{ year: number; month: number } | null>(null);
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [confirmMessage, setConfirmMessage] = useState("");
     const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
-
-    // partnerId no longer needed; JWT identifies user
 
     useEffect(() => {
         async function fetchEarningsData() {
@@ -106,16 +110,17 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
                     }
                 });
 
-                const chartData = Object.entries(monthlyMap).map(([month, total]) => ({
-                    month,
-                    total: parseFloat(total.toFixed(2))
-                }));
+                const chartData = Object.entries(monthlyMap)
+                    .map(([month, total]) => ({
+                        month,
+                        total: parseFloat(total.toFixed(2))
+                    }))
+                    .sort((a, b) => a.month.localeCompare(b.month));
 
                 setMonthlyData(chartData);
 
                 // Calculate Last Month and This Month for the comparison chart
                 const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
                 const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                 const lastMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
@@ -124,76 +129,69 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
 
             } catch (err) {
                 console.error("Failed to fetch earnings data:", err);
-                setError("Failed to load earnings data");
+                setError("Unable to load earnings trend data.");
             } finally {
                 setLoading(false);
             }
         }
-
         fetchEarningsData();
-    }, [filters?.year, filters?.month, filters?.startDate, filters?.endDate]);
+    }, [filters]);
 
-    const handleConfirmPayment = (year: number, month: number) => {
+    const handleConfirmPayment = async (year: number, month: number) => {
         setSelectedMonth({ year, month });
         setConfirmDialogOpen(true);
-        fetchPaymentStatus(year, month);
-    };
-
-    const fetchPaymentStatus = async (year: number, month: number) => {
         try {
-            const response = await axios.get(
-                `${API_URL}/api/partner/payment-status/${year}/${month}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("partnerToken")}`,
-                    },
-                }
-            );
-            setPaymentStatus(response.data.data?.monthlyEarning ?? null);
+            const response = await axios.get(`${API_URL}/api/partner/monthly-earning-status/${year}/${month}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("partnerToken")}`,
+                },
+            });
+            setPaymentStatus(response.data.data.monthlyEarning);
         } catch (err) {
-            console.error("Failed to fetch payment status:", err);
+            console.error("Error fetching payment status:", err);
         }
     };
 
     const handleConfirmClick = async () => {
         if (!selectedMonth) return;
-
         setConfirmLoading(true);
         try {
-            await axios.post(
-                `${API_URL}/api/partner/confirm-payment`,
-                {
-                    year: selectedMonth.year,
-                    month: selectedMonth.month,
-                    notes: confirmMessage
+            await axios.post(`${API_URL}/api/partner/confirm-payment`, {
+                year: selectedMonth.year,
+                month: selectedMonth.month,
+                notes: confirmMessage
+            }, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("partnerToken")}`,
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("partnerToken")}`,
-                    },
-                }
-            );
-
+            });
             setConfirmDialogOpen(false);
             setConfirmMessage("");
             setSelectedMonth(null);
-            window.location.reload();
+            // Optionally refresh stats here
         } catch (err) {
-            console.error("Failed to confirm payment:", err);
-            alert("Failed to confirm payment");
+            console.error("Error confirming payment:", err);
         } finally {
             setConfirmLoading(false);
         }
     };
 
     if (loading) {
-        return <div className="text-center py-8 text-gray-400">Loading graphs...</div>;
+        return (
+            <div className="h-[400px] w-full flex items-center justify-center bg-gray-50/50 rounded-xl border border-gray-100">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-100 border-t-blue-600"></div>
+                    <p className="text-sm font-medium text-gray-500">Generating your insights...</p>
+                </div>
+            </div>
+        );
     }
 
     if (error) {
         return (
             <Alert className="border-red-200 bg-red-50 mt-4 rounded-xl">
-                <AlertTitle className="text-red-800">Error rendering graphs</AlertTitle>
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertTitle className="text-red-800">Error</AlertTitle>
                 <AlertDescription className="text-red-700">{error}</AlertDescription>
             </Alert>
         );
@@ -203,42 +201,59 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Monthly Earnings Trend Graph */}
-                <Card className="p-6 lg:col-span-2 border border-gray-100 shadow-sm rounded-xl">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-6">Earnings Trend (12 Months)</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={monthlyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <Card className="p-6 lg:col-span-2 border border-gray-100 shadow-sm rounded-xl bg-white">
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-bold text-gray-900 leading-none">Earnings Trend</h3>
+                            <p className="text-sm text-gray-500">Monthly commission performance</p>
+                        </div>
+                        <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-400">
+                            <TrendingUp className="h-5 w-5" />
+                        </div>
+                    </div>
+                    
+                    <ResponsiveContainer width="100%" height={320}>
+                        <LineChart data={monthlyData} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                             <XAxis
                                 dataKey="month"
                                 tickFormatter={(val) => {
                                     const parts = val.split('-');
-                                    return parts.length === 2 ? `${parts[1]}/${parts[0].substring(2)}` : val;
+                                    return parts.length === 2 ? `${monthNames[parseInt(parts[1]) - 1].substring(0, 3)}` : val;
                                 }}
-                                tick={{ fill: '#6B7280', fontSize: 12 }}
+                                tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 600 }}
                                 axisLine={false}
                                 tickLine={false}
                                 dy={10}
                             />
                             <YAxis
-                                tickFormatter={(val) => `₹${val}`}
-                                tick={{ fill: '#6B7280', fontSize: 12 }}
+                                tickFormatter={(val) => `₹${val >= 1000 ? `${val / 1000}k` : val}`}
+                                tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 600 }}
                                 axisLine={false}
                                 tickLine={false}
-                                dx={-10}
+                                dx={-5}
                             />
                             <Tooltip
-                                formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
-                                labelFormatter={(label) => `Month: ${label}`}
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Earned']}
+                                labelFormatter={(label) => {
+                                    const parts = label.split('-');
+                                    return `${monthNames[parseInt(parts[1]) - 1]} ${parts[0]}`;
+                                }}
+                                contentStyle={{ 
+                                    borderRadius: '16px', 
+                                    border: 'none', 
+                                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+                                    padding: '12px 16px'
+                                }}
                             />
                             <Line
                                 type="monotone"
                                 dataKey="total"
-                                stroke="#111827"
-                                strokeWidth={3}
-                                dot={{ fill: "#111827", strokeWidth: 2, r: 4 }}
-                                activeDot={{ r: 6, strokeWidth: 0, fill: '#3b82f6' }}
-                                animationDuration={1000}
+                                stroke="#2563EB"
+                                strokeWidth={4}
+                                dot={false}
+                                activeDot={{ r: 6, strokeWidth: 0, fill: '#2563EB' }}
+                                animationDuration={1500}
                             />
                         </LineChart>
                     </ResponsiveContainer>
@@ -247,40 +262,52 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
                 <div className="space-y-6">
                     {/* Comparison Chart */}
                     <Card className="p-6 border border-gray-100 shadow-sm rounded-xl bg-white">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-6">Comparison</h3>
-                        <ResponsiveContainer width="100%" height={220}>
+                         <div className="space-y-1 mb-8">
+                            <h3 className="text-lg font-bold text-gray-900 leading-none">Growth</h3>
+                            <p className="text-sm text-gray-500">Monthly comparison</p>
+                        </div>
+                        <ResponsiveContainer width="100%" height={200}>
                             <BarChart data={[
-                                { name: "Last Month", value: lastMonthEarnings },
-                                { name: "This Month", value: thisMonthEarnings }
+                                { name: "Last", value: lastMonthEarnings },
+                                { name: "Current", value: thisMonthEarnings }
                             ]}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                <XAxis dataKey="name" tick={{ fill: '#6B7280', fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
+                                <XAxis dataKey="name" tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} dy={10} />
                                 <Tooltip
                                     formatter={(value) => [`₹${value}`, 'Amount']}
                                     cursor={{ fill: '#F3F4F6' }}
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    contentStyle={{ 
+                                        borderRadius: '12px', 
+                                        border: 'none', 
+                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                                    }}
                                 />
-                                <Bar dataKey="value" fill="#0EA5E9" radius={[4, 4, 0, 0]} barSize={40} />
+                                <Bar dataKey="value" fill="#2563EB" radius={[6, 6, 0, 0]} barSize={40} />
                             </BarChart>
                         </ResponsiveContainer>
                     </Card>
 
-                    {/* Minimal Apple-like Payment Confirmation Card */}
-                    <Card className="p-6 border border-gray-100 shadow-sm shadow-blue-500/5 rounded-xl bg-white relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-500 ease-out" />
-                        <div className="relative">
-                            <h4 className="text-lg font-semibold text-gray-900 mb-1">Confirm Payment</h4>
-                            <p className="text-sm text-gray-500 mb-4 leading-relaxed tracking-wide">
-                                Request a confirmation of your earnings with the administration for this period.
+                    {/* Premium Payment Confirmation Card */}
+                    <Card className="p-6 border-0 shadow-xl shadow-blue-500/10 rounded-2xl bg-gradient-to-br from-white to-blue-50/30 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-125 duration-700 ease-in-out" />
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-sm">
+                                    <CheckCircle className="h-4 w-4" />
+                                </div>
+                                <h4 className="text-lg font-bold text-gray-900 uppercase tracking-tighter">Verification</h4>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                                Ready for payout? Confirm your monthly earnings to notify the finance team.
                             </p>
                             <Button
                                 onClick={() => {
                                     const now = new Date();
                                     handleConfirmPayment(now.getFullYear(), now.getMonth() + 1);
                                 }}
-                                className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 rounded-lg shadow-sm transition-all shadow-gray-900/10"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:translate-y-[-2px] active:translate-y-[0px]"
                             >
-                                Verify Status
+                                Request Payout
                             </Button>
                         </div>
                     </Card>
@@ -289,47 +316,66 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
 
             {/* Confirmation Dialog */}
             <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-                <DialogContent className="max-w-md bg-white">
-                    <DialogHeader>
-                        <DialogTitle>Confirm Payment</DialogTitle>
-                        <DialogDescription>
-                            Confirm payment for {selectedMonth ? `${selectedMonth.month}/${selectedMonth.year}` : "this month"}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-3">
-                        <div className="p-3 bg-gray-50 rounded">
-                            <p className="text-sm text-gray-600">Total Amount</p>
-                            <p className="text-lg font-bold">
-                                ₹{paymentStatus ? Number(paymentStatus.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "0.00"}
-                            </p>
+                <DialogContent className="max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
+                    <div className="bg-blue-600 p-8 text-white relative">
+                         <div className="absolute top-0 right-0 p-4 opacity-20">
+                            <IndianRupee className="w-24 h-24 -mr-8 -mt-8" />
                         </div>
-                        <div className="p-3 bg-gray-50 rounded">
-                            <p className="text-sm text-gray-600">Total Orders</p>
-                            <p className="text-lg font-bold">{paymentStatus?.totalOrders ?? 0}</p>
+                        <DialogHeader>
+                            <DialogTitle className="text-white text-2xl font-black tracking-tight mb-1">Confirm Earnings</DialogTitle>
+                            <DialogDescription className="text-blue-100 font-medium">
+                                Verify your commissions for {selectedMonth ? `${monthNames[selectedMonth.month - 1]} ${selectedMonth.year}` : "this month"}
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
+                    
+                    <div className="p-8 space-y-6 bg-white">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100 text-center">
+                                <p className="text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">Commission</p>
+                                <p className="text-2xl font-black text-gray-900">
+                                    ₹{paymentStatus ? Number(paymentStatus.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 }) : "0.00"}
+                                </p>
+                            </div>
+                            <div className="p-5 bg-gray-50 rounded-3xl border border-gray-100 text-center">
+                                <p className="text-[10px] uppercase font-black text-gray-400 mb-1 tracking-widest">Total Orders</p>
+                                <p className="text-2xl font-black text-gray-900">{paymentStatus?.totalOrders ?? 0}</p>
+                            </div>
                         </div>
-                        <div className="p-3 bg-gray-50 rounded">
-                            <p className="text-sm text-gray-600">Status</p>
-                            <p className="text-lg font-bold capitalize">{paymentStatus?.paymentStatus ?? "PENDING"}</p>
+
+                        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                            <p className="text-xs font-black text-blue-700 uppercase tracking-widest">Status</p>
+                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${
+                                paymentStatus?.paymentStatus === 'PAID' ? 'bg-green-500 text-white' : 
+                                paymentStatus?.paymentStatus === 'CONFIRMED' ? 'bg-blue-500 text-white' : 'bg-amber-500 text-white'
+                            }`}>
+                                {paymentStatus?.paymentStatus ?? "PENDING"}
+                            </span>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Optional Notes</label>
+                            <textarea
+                                className="w-full h-28 p-4 bg-gray-50 border border-gray-200 rounded-2xl resize-none text-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none"
+                                placeholder="Any specific details for our finance team?"
+                                value={confirmMessage}
+                                onChange={(e) => setConfirmMessage(e.target.value)}
+                            />
                         </div>
                     </div>
-                    <textarea
-                        className="w-full h-24 p-2 border border-gray-300 rounded resize-none"
-                        placeholder="Add notes (optional)"
-                        value={confirmMessage}
-                        onChange={(e) => setConfirmMessage(e.target.value)}
-                    />
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+
+                    <div className="p-8 pt-0 flex gap-4 bg-white">
+                        <Button variant="outline" onClick={() => setConfirmDialogOpen(false)} className="flex-1 h-14 rounded-2xl border-gray-100 font-bold text-gray-400 hover:bg-gray-50 transition-colors">
                             Cancel
                         </Button>
                         <Button
                             onClick={handleConfirmClick}
                             disabled={confirmLoading}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            className="flex-[2] h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
-                            {confirmLoading ? "Confirming..." : "Confirm"}
+                            {confirmLoading ? "Processing..." : "Confirm & Notify"}
                         </Button>
-                    </DialogFooter>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

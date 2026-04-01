@@ -6,7 +6,7 @@ import {
     Ticket,
     Copy,
     Calendar,
-    DollarSign,
+    IndianRupee,
     CheckCircle,
     Search
 } from 'lucide-react';
@@ -181,7 +181,7 @@ const PartnerCoupons = () => {
                                 </p>
                             </div>
                             <div className="p-3 bg-green-100 rounded-full">
-                                <DollarSign className="h-8 w-8 text-green-600" />
+                                <IndianRupee className="h-8 w-8 text-green-600" />
                             </div>
                         </div>
                     </CardContent>

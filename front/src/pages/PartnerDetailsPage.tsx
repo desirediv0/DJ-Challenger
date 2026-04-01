@@ -145,6 +145,8 @@ export default function PartnerDetailsPage() {
         }
 
         try {
+            if (!partner) return;
+
             setIsProcessingPayment(earningId);
             const response = await partners.markPaymentAsPaid(earningId, {
                 notes,

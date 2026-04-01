@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Calendar, Download, DollarSign, Clock, CheckCircle,
-    TrendingUp, AlertCircle, IndianRupee, Filter, ArrowUpRight
+    Calendar, Download, IndianRupee, Clock, CheckCircle,
+    TrendingUp, AlertCircle, Filter, ArrowUpRight
 } from 'lucide-react';
 import apiService from '../services/apiService';
 import PartnerEarningsChart from '../components/PartnerEarningsChart';
@@ -412,7 +412,7 @@ const PartnerEarnings = () => {
                         </table>
                     ) : (
                         <div className="py-16 text-center">
-                            <DollarSign className="h-12 w-12 mx-auto text-gray-200 mb-3" />
+                            <IndianRupee className="h-12 w-12 mx-auto text-gray-200 mb-3" />
                             <h3 className="text-sm font-semibold text-gray-500">No earnings found</h3>
                             <p className="text-xs text-gray-400 mt-1">No commission data for the selected period.</p>
                         </div>

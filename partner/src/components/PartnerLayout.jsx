@@ -22,7 +22,7 @@ const PartnerLayout = () => {
     const navigation = [
         { name: t('nav_dashboard'), href: '/', icon: Home },
         { name: t('nav_coupons'), href: '/coupons', icon: Ticket },
-        { name: t('nav_earnings'), href: '/earnings', icon: DollarSign },
+        { name: t('nav_earnings'), href: '/earnings', icon: IndianRupee },
     ];
 
     const handleLogout = () => {
