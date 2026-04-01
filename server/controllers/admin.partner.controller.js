@@ -351,73 +351,60 @@ export const getPartnerById = asyncHandler(async (req, res) => {
         return res.status(404).json(new ApiResponsive(404, null, 'Partner not found'));
     }
 
-    // Calculate earnings summary
+    // Dynamically aggregate monthly totals from actual earnings
     const totalEarnings = partner.earnings.reduce((sum, earning) => sum + parseFloat(earning.amount), 0);
     const totalOrders = partner.earnings.length;
-    const pendingAmount = partner.monthlyEarnings
-        .filter(monthly => monthly.paymentStatus === 'PENDING')
-        .reduce((sum, monthly) => sum + parseFloat(monthly.totalAmount), 0);
-    const paidAmount = partner.monthlyEarnings
-        .filter(monthly => monthly.paymentStatus === 'PAID')
-        .reduce((sum, monthly) => sum + parseFloat(monthly.totalAmount), 0);
 
-    // If no monthly earnings exist, create them from individual earnings
-    if (partner.monthlyEarnings.length === 0 && partner.earnings.length > 0) {
-        const monthlyGroups = {};
-        partner.earnings.forEach(earning => {
-            const date = new Date(earning.createdAt);
-            const year = date.getFullYear();
-            const month = date.getMonth() + 1;
-            const key = `${year}-${month}`;
+    const monthlyEarningsMap = {};
+    partner.earnings.forEach(earning => {
+        const date = new Date(earning.createdAt);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const key = `${year}-${month}`;
 
-            if (!monthlyGroups[key]) {
-                monthlyGroups[key] = {
-                    year,
-                    month,
-                    totalAmount: 0,
-                    totalOrders: 0,
-                    paymentStatus: 'PENDING'
-                };
-            }
-
-            monthlyGroups[key].totalAmount += parseFloat(earning.amount);
-            monthlyGroups[key].totalOrders += 1;
-        });
-
-        // Create monthly earnings in database
-        for (const monthlyData of Object.values(monthlyGroups)) {
-            await prisma.partnerMonthlyEarning.upsert({
-                where: {
-                    partnerId_year_month: {
-                        partnerId,
-                        year: monthlyData.year,
-                        month: monthlyData.month
-                    }
-                },
-                update: {
-                    totalAmount: monthlyData.totalAmount,
-                    totalOrders: monthlyData.totalOrders
-                },
-                create: {
-                    partnerId,
-                    year: monthlyData.year,
-                    month: monthlyData.month,
-                    totalAmount: monthlyData.totalAmount,
-                    totalOrders: monthlyData.totalOrders,
-                    paymentStatus: monthlyData.paymentStatus
-                }
-            });
+        if (!monthlyEarningsMap[key]) {
+            monthlyEarningsMap[key] = {
+                year,
+                month,
+                totalAmount: 0,
+                totalOrders: 0
+            };
         }
+        monthlyEarningsMap[key].totalAmount += parseFloat(earning.amount);
+        monthlyEarningsMap[key].totalOrders += 1;
+    });
 
-        // Fetch the newly created monthly earnings
-        partner.monthlyEarnings = await prisma.partnerMonthlyEarning.findMany({
-            where: { partnerId },
-            orderBy: [
-                { year: 'desc' },
-                { month: 'desc' }
-            ]
-        });
-    }
+    const dbMonthlyByKey = new Map(
+        partner.monthlyEarnings.map(m => [`${m.year}-${m.month}`, m])
+    );
+
+    const calculatedMonths = Object.values(monthlyEarningsMap).sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return b.month - a.month;
+    });
+
+    const dynamicMonthlyEarnings = calculatedMonths.map(calc => {
+        const dbRow = dbMonthlyByKey.get(`${calc.year}-${calc.month}`);
+        return {
+            id: dbRow?.id || `temp-${calc.year}-${calc.month}`,
+            year: calc.year,
+            month: calc.month,
+            totalAmount: calc.totalAmount,
+            totalOrders: calc.totalOrders,
+            paymentStatus: dbRow?.paymentStatus ?? 'PENDING',
+            paidAt: dbRow?.paidAt ?? null,
+            notes: dbRow?.notes ?? ''
+        };
+    });
+
+    const paidAmount = dynamicMonthlyEarnings
+        .filter(monthly => monthly.paymentStatus === 'PAID')
+        .reduce((sum, monthly) => sum + monthly.totalAmount, 0);
+
+    const pendingAmount = totalEarnings - paidAmount;
+    
+    // Update partner object with dynamically calculated accurate array
+    partner.monthlyEarnings = dynamicMonthlyEarnings;
 
     // Remove password from response and transform couponPartners to simple coupons array
     const { password, couponPartners, ...partnerData } = partner;
@@ -440,23 +427,26 @@ export const getPartnerById = asyncHandler(async (req, res) => {
     }, 'Partner details fetched successfully'));
 });
 
-// Mark monthly payment as paid (admin only)
 export const markPaymentAsPaid = asyncHandler(async (req, res) => {
     const { earningId } = req.params;
-    const { notes, year, month } = req.body;
+    const { notes, year, month, partnerId } = req.body;
     const adminId = req.admin.id;
 
     try {
         // Check if this is a temporary ID (temp-YYYY-M format)
         if (earningId.startsWith('temp-')) {
-            // Extract partnerId from the temp ID or get it from the request
             const parts = earningId.split('-'); // temp-year-month
             const earningYear = parseInt(parts[1]);
             const earningMonth = parseInt(parts[2]);
 
-            // Find the partner associated with this earning
+            if (!partnerId) {
+                return res.status(400).json(new ApiResponsive(400, null, 'partnerId is required for marking temporary months as paid'));
+            }
+
+            // Find the partner's earnings for this specific month
             const partnerEarnings = await prisma.partnerEarning.findMany({
                 where: {
+                    partnerId: partnerId,
                     AND: [
                         {
                             createdAt: {
@@ -465,19 +455,15 @@ export const markPaymentAsPaid = asyncHandler(async (req, res) => {
                             }
                         }
                     ]
-                },
-                include: { partner: true }
+                }
             });
 
             if (partnerEarnings.length === 0) {
-                return res.status(404).json(new ApiResponsive(404, null, 'No earnings found for this period'));
+                return res.status(404).json(new ApiResponsive(404, null, 'No earnings found for this partner this month'));
             }
 
-            const partnerId = partnerEarnings[0].partnerId;
-            const totalAmount = partnerEarnings
-                .filter(e => e.partnerId === partnerId)
-                .reduce((sum, e) => sum + parseFloat(e.amount), 0);
-            const totalOrders = partnerEarnings.filter(e => e.partnerId === partnerId).length;
+            const totalAmount = partnerEarnings.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+            const totalOrders = partnerEarnings.length;
 
             // Create or update monthly earning record
             const updatedEarning = await prisma.partnerMonthlyEarning.upsert({

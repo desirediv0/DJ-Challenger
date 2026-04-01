@@ -86,26 +86,23 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
                 });
 
                 const data = response.data.data;
-                setTotalEarnings(data.totalEarnings || 0);
 
-                // Calculate monthly breakdown
-                const earnings = data.earnings || [];
+                // Aggregate earnings using the pre-calculated monthlyEarnings array from the backend
+                const monthlyEarningsList = data.monthlyEarnings || [];
                 const monthlyMap: Record<string, number> = {};
                 const now = new Date();
 
-                // Initialize last 12 months
+                // Initialize last 12 months with 0
                 for (let i = 11; i >= 0; i--) {
                     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
                     const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
                     monthlyMap[monthKey] = 0;
                 }
 
-                // Aggregate earnings by month
-                earnings.forEach((earning: any) => {
-                    const d = new Date(earning.createdAt);
-                    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                    if (monthlyMap.hasOwnProperty(monthKey)) {
-                        monthlyMap[monthKey] += parseFloat(earning.amount || 0);
+                // Apply actual data
+                monthlyEarningsList.forEach((monthly: any) => {
+                    if (monthlyMap.hasOwnProperty(monthly.month)) {
+                        monthlyMap[monthly.month] = parseFloat(monthly.totalEarnings || 0);
                     }
                 });
 
@@ -116,35 +113,15 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
 
                 setMonthlyData(chartData);
 
-                // Calculate year and month breakdowns
-                const currentYear = now.getFullYear();
-                const currentMonth = now.getMonth() + 1;
+                // Calculate Last Month and This Month for the comparison chart
+                const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-                let yearTotal = 0;
-                let thisMonthTotal = 0;
-                let lastMonthTotal = 0;
+                const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const lastMonthKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
-                earnings.forEach((earning: any) => {
-                    const d = new Date(earning.createdAt);
-                    const amount = parseFloat(earning.amount || 0);
+                setThisMonthEarnings(monthlyMap[currentMonthKey] || 0);
+                setLastMonthEarnings(monthlyMap[lastMonthKey] || 0);
 
-                    if (d.getFullYear() === currentYear) {
-                        yearTotal += amount;
-                    }
-
-                    if (d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth) {
-                        thisMonthTotal += amount;
-                    }
-
-                    if (d.getFullYear() === currentYear && d.getMonth() === currentMonth - 2) {
-                        lastMonthTotal += amount;
-                    }
-                });
-
-                setThisYearEarnings(parseFloat(yearTotal.toFixed(2)));
-                setThisMonthEarnings(parseFloat(thisMonthTotal.toFixed(2)));
-                setLastMonthEarnings(parseFloat(lastMonthTotal.toFixed(2)));
-                setPendingAmount(data.pendingAmount || 0);
             } catch (err) {
                 console.error("Failed to fetch earnings data:", err);
                 setError("Failed to load earnings data");
@@ -159,8 +136,6 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
     const handleConfirmPayment = (year: number, month: number) => {
         setSelectedMonth({ year, month });
         setConfirmDialogOpen(true);
-
-        // Fetch current payment status
         fetchPaymentStatus(year, month);
     };
 
@@ -202,8 +177,6 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
             setConfirmDialogOpen(false);
             setConfirmMessage("");
             setSelectedMonth(null);
-
-            // Refresh data
             window.location.reload();
         } catch (err) {
             console.error("Failed to confirm payment:", err);
@@ -214,13 +187,13 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
     };
 
     if (loading) {
-        return <div className="text-center py-8">Loading earnings data...</div>;
+        return <div className="text-center py-8 text-gray-400">Loading graphs...</div>;
     }
 
     if (error) {
         return (
-            <Alert className="border-red-200 bg-red-50">
-                <AlertTitle className="text-red-800">Error</AlertTitle>
+            <Alert className="border-red-200 bg-red-50 mt-4 rounded-xl">
+                <AlertTitle className="text-red-800">Error rendering graphs</AlertTitle>
                 <AlertDescription className="text-red-700">{error}</AlertDescription>
             </Alert>
         );
@@ -228,95 +201,95 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
 
     return (
         <div className="space-y-6">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100">
-                    <div className="text-sm text-gray-600">Total Earnings</div>
-                    <div className="text-2xl font-bold text-blue-900 mt-2">
-                        ₹{totalEarnings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Monthly Earnings Trend Graph */}
+                <Card className="p-6 lg:col-span-2 border border-gray-100 shadow-sm rounded-xl">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6">Earnings Trend (12 Months)</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={monthlyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                            <XAxis
+                                dataKey="month"
+                                tickFormatter={(val) => {
+                                    const parts = val.split('-');
+                                    return parts.length === 2 ? `${parts[1]}/${parts[0].substring(2)}` : val;
+                                }}
+                                tick={{ fill: '#6B7280', fontSize: 12 }}
+                                axisLine={false}
+                                tickLine={false}
+                                dy={10}
+                            />
+                            <YAxis
+                                tickFormatter={(val) => `₹${val}`}
+                                tick={{ fill: '#6B7280', fontSize: 12 }}
+                                axisLine={false}
+                                tickLine={false}
+                                dx={-10}
+                            />
+                            <Tooltip
+                                formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Amount']}
+                                labelFormatter={(label) => `Month: ${label}`}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="total"
+                                stroke="#111827"
+                                strokeWidth={3}
+                                dot={{ fill: "#111827", strokeWidth: 2, r: 4 }}
+                                activeDot={{ r: 6, strokeWidth: 0, fill: '#3b82f6' }}
+                                animationDuration={1000}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
                 </Card>
-                <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100">
-                    <div className="text-sm text-gray-600">This Year</div>
-                    <div className="text-2xl font-bold text-green-900 mt-2">
-                        ₹{thisYearEarnings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                    </div>
-                </Card>
-                <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100">
-                    <div className="text-sm text-gray-600">This Month</div>
-                    <div className="text-2xl font-bold text-purple-900 mt-2">
-                        ₹{thisMonthEarnings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                    </div>
-                </Card>
-                <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100">
-                    <div className="text-sm text-gray-600">Last Month</div>
-                    <div className="text-2xl font-bold text-orange-900 mt-2">
-                        ₹{lastMonthEarnings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                    </div>
-                </Card>
-            </div>
 
-            {/* Monthly Earnings Chart */}
-            <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Monthly Earnings</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={monthlyData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => `₹${value}`} />
-                        <Legend />
-                        <Line
-                            type="monotone"
-                            dataKey="total"
-                            stroke="#8b5cf6"
-                            strokeWidth={2}
-                            name="Earnings"
-                            dot={{ fill: "#8b5cf6" }}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
-            </Card>
+                <div className="space-y-6">
+                    {/* Comparison Chart */}
+                    <Card className="p-6 border border-gray-100 shadow-sm rounded-xl bg-white">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-6">Comparison</h3>
+                        <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={[
+                                { name: "Last Month", value: lastMonthEarnings },
+                                { name: "This Month", value: thisMonthEarnings }
+                            ]}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                <XAxis dataKey="name" tick={{ fill: '#6B7280', fontSize: 12 }} axisLine={false} tickLine={false} dy={10} />
+                                <Tooltip
+                                    formatter={(value) => [`₹${value}`, 'Amount']}
+                                    cursor={{ fill: '#F3F4F6' }}
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Bar dataKey="value" fill="#0EA5E9" radius={[4, 4, 0, 0]} barSize={40} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Card>
 
-            {/* Comparison Chart */}
-            <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Month Comparison</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={[
-                        { name: "Last Month", value: lastMonthEarnings },
-                        { name: "This Month", value: thisMonthEarnings }
-                    ]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => `₹${value}`} />
-                        <Bar dataKey="value" fill="#8b5cf6" />
-                    </BarChart>
-                </ResponsiveContainer>
-            </Card>
-
-            {/* Payment Confirmation Button */}
-            <Card className="p-6 bg-gradient-to-r from-[#fef3c7] to-[#fcd34d]">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h4 className="text-lg font-semibold text-gray-900">Confirm Payment Status</h4>
-                        <p className="text-sm text-gray-700 mt-1">Verify and confirm your monthly earnings payment</p>
-                    </div>
-                    <Button
-                        onClick={() => {
-                            const now = new Date();
-                            handleConfirmPayment(now.getFullYear(), now.getMonth() + 1);
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700"
-                    >
-                        Confirm This Month
-                    </Button>
+                    {/* Minimal Apple-like Payment Confirmation Card */}
+                    <Card className="p-6 border border-gray-100 shadow-sm shadow-blue-500/5 rounded-xl bg-white relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-150 duration-500 ease-out" />
+                        <div className="relative">
+                            <h4 className="text-lg font-semibold text-gray-900 mb-1">Confirm Payment</h4>
+                            <p className="text-sm text-gray-500 mb-4 leading-relaxed tracking-wide">
+                                Request a confirmation of your earnings with the administration for this period.
+                            </p>
+                            <Button
+                                onClick={() => {
+                                    const now = new Date();
+                                    handleConfirmPayment(now.getFullYear(), now.getMonth() + 1);
+                                }}
+                                className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 rounded-lg shadow-sm transition-all shadow-gray-900/10"
+                            >
+                                Verify Status
+                            </Button>
+                        </div>
+                    </Card>
                 </div>
-            </Card>
+            </div>
 
             {/* Confirmation Dialog */}
             <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md bg-white">
                     <DialogHeader>
                         <DialogTitle>Confirm Payment</DialogTitle>
                         <DialogDescription>
@@ -352,7 +325,7 @@ export default function PartnerEarningsChart({ filters = {} }: EarningsChartProp
                         <Button
                             onClick={handleConfirmClick}
                             disabled={confirmLoading}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
                             {confirmLoading ? "Confirming..." : "Confirm"}
                         </Button>

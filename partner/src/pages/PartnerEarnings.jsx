@@ -167,8 +167,8 @@ const PartnerEarnings = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Total Earnings */}
-                <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+                {/* Total Lifetime Earnings */}
+                <div className="bg-white rounded-xl p-5 border-l-4 border-l-blue-500 border-t border-r border-b border-gray-100 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                         <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                             <IndianRupee className="h-5 w-5 text-blue-600" />
@@ -176,11 +176,27 @@ const PartnerEarnings = () => {
                         <ArrowUpRight className="h-4 w-4 text-green-500" />
                     </div>
                     <p className="text-2xl font-bold text-gray-900">&#8377;{formatAmount(totalEarnings)}</p>
-                    <p className="text-xs text-gray-500 mt-1">Total Earnings (All Time)</p>
+                    <p className="text-xs text-gray-500 mt-1 font-medium">Lifetime Earnings</p>
                 </div>
 
-                {/* This Month */}
-                <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+                {/* Total Pending Balance */}
+                <div className={`rounded-xl p-5 border-l-4 shadow-sm ${pendingAmount > 0
+                    ? 'bg-red-50 border-l-red-500 border-t border-r border-b border-red-100'
+                    : 'bg-white border-l-gray-200 border-t border-r border-b border-gray-100'
+                    }`}>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${pendingAmount > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
+                            <IndianRupee className={`h-5 w-5 ${pendingAmount > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+                        </div>
+                    </div>
+                    <p className={`text-2xl font-bold ${pendingAmount > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                        &#8377;{formatAmount(pendingAmount)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1 font-medium">Total Pending Balance</p>
+                </div>
+
+                {/* This Month Earnings */}
+                <div className="bg-white rounded-xl p-5 border-l-4 border-l-orange-400 border-t border-r border-b border-gray-100 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                         <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
                             <TrendingUp className="h-5 w-5 text-orange-500" />
@@ -190,51 +206,32 @@ const PartnerEarnings = () => {
                         </span>
                     </div>
                     <p className="text-2xl font-bold text-gray-900">&#8377;{formatAmount(thisMonthAmount)}</p>
-                    <p className="text-xs text-gray-500 mt-1">This Month Earnings</p>
+                    <p className="text-xs text-gray-500 mt-1 font-medium">This Month Earnings</p>
                 </div>
 
-                {/* Last Month */}
-                <div className={`rounded-xl p-5 border shadow-sm ${lastMonthPaid
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-white border-gray-100'
+                {/* Last Month Status */}
+                <div className={`rounded-xl p-5 border-l-4 shadow-sm ${lastMonthPaid
+                    ? 'bg-green-50 border-l-green-500 border-t border-r border-b border-green-100'
+                    : 'bg-white border-l-amber-400 border-t border-r border-b border-gray-100'
                     }`}>
                     <div className="flex items-center justify-between mb-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${lastMonthPaid ? 'bg-green-100' : 'bg-gray-100'}`}>
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${lastMonthPaid ? 'bg-green-100' : 'bg-amber-100'}`}>
                             {lastMonthPaid
                                 ? <CheckCircle className="h-5 w-5 text-green-600" />
-                                : <Clock className="h-5 w-5 text-gray-500" />
+                                : <Clock className="h-5 w-5 text-amber-500" />
                             }
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${lastMonthPaid
+                        <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded-full font-bold ${lastMonthPaid
                             ? 'bg-green-200 text-green-800'
                             : 'bg-amber-100 text-amber-700'
                             }`}>
                             {lastMonthPaid ? 'Paid' : 'Pending'}
                         </span>
                     </div>
-                    <p className={`text-2xl font-bold ${lastMonthPaid ? 'text-green-800' : 'text-gray-900'}`}>
+                    <p className={`text-2xl font-bold ${lastMonthPaid ? 'text-gray-900' : 'text-gray-900'}`}>
                         &#8377;{formatAmount(lastMonthAmount)}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Last Month ({monthNames[lastMonthNum - 1]})</p>
-                    {lastMonthPaid && lastMonthEntry?.paidAt && (
-                        <p className="text-xs text-green-600 mt-1">Paid on {formatDate(lastMonthEntry.paidAt)}</p>
-                    )}
-                </div>
-
-                {/* Pending Payment */}
-                <div className={`rounded-xl p-5 border shadow-sm ${pendingAmount > 0
-                    ? 'bg-amber-50 border-amber-200'
-                    : 'bg-white border-gray-100'
-                    }`}>
-                    <div className="flex items-center justify-between mb-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${pendingAmount > 0 ? 'bg-amber-100' : 'bg-gray-100'}`}>
-                            <Clock className={`h-5 w-5 ${pendingAmount > 0 ? 'text-amber-600' : 'text-gray-400'}`} />
-                        </div>
-                    </div>
-                    <p className={`text-2xl font-bold ${pendingAmount > 0 ? 'text-amber-800' : 'text-gray-900'}`}>
-                        &#8377;{formatAmount(pendingAmount)}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">Total Pending Payment</p>
+                    <p className="text-xs text-gray-500 mt-1 font-medium">Last Month ({monthNames[lastMonthNum - 1]})</p>
                 </div>
             </div>
 

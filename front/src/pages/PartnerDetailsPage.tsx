@@ -149,7 +149,8 @@ export default function PartnerDetailsPage() {
             const response = await partners.markPaymentAsPaid(earningId, {
                 notes,
                 year,
-                month
+                month,
+                partnerId: partner.id
             });
 
             if (response.data.success) {
@@ -272,33 +273,46 @@ export default function PartnerDetailsPage() {
 
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {/* Total Earnings */}
+                {/* Total Lifetime Earnings */}
                 <Card className="p-5 border-l-4 border-l-blue-500">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                             <IndianRupee className="h-5 w-5 text-blue-600" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs text-gray-500">Total Earnings</p>
+                            <p className="text-xs text-gray-500 font-medium">Lifetime Earnings</p>
                             <p className="text-xl font-bold text-gray-900 truncate">&#8377;{parseFloat(String(partner.totalEarnings || 0)).toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
                         </div>
                     </div>
                 </Card>
 
-                {/* This Month */}
+                {/* Total Pending Balance */}
+                <Card className="p-5 border-l-4 border-l-red-500">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                            <IndianRupee className="h-5 w-5 text-red-600" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs text-gray-500 font-medium">Total Pending Balance</p>
+                            <p className="text-xl font-bold text-red-600 truncate">&#8377;{parseFloat(String(partner.pendingAmount || 0)).toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* This Month Earnings */}
                 <Card className="p-5 border-l-4 border-l-orange-400">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
                             <TrendingUp className="h-5 w-5 text-orange-500" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs text-gray-500">This Month ({monthNames[thisMonthNum-1]})</p>
+                            <p className="text-xs text-gray-500 font-medium">This Month ({monthNames[thisMonthNum-1]})</p>
                             <p className="text-xl font-bold text-gray-900 truncate">&#8377;{thisMonthAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
                         </div>
                     </div>
                 </Card>
 
-                {/* Last Month */}
+                {/* Last Month Status */}
                 <Card className={`p-5 border-l-4 ${lastMonthPaid ? 'border-l-green-500' : 'border-l-amber-400'}`}>
                     <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${lastMonthPaid ? 'bg-green-50' : 'bg-amber-50'}`}>
@@ -309,27 +323,12 @@ export default function PartnerDetailsPage() {
                         </div>
                         <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                                <p className="text-xs text-gray-500">Last Month ({monthNames[lastMonthNum-1]})</p>
+                                <p className="text-xs text-gray-500">Last M ({monthNames[lastMonthNum-1]})</p>
                                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${lastMonthPaid ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                                     {lastMonthPaid ? 'PAID' : 'PENDING'}
                                 </span>
                             </div>
                             <p className="text-xl font-bold text-gray-900 truncate">&#8377;{lastMonthAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
-                        </div>
-                    </div>
-                </Card>
-
-                {/* Pending Amount */}
-                <Card className={`p-5 border-l-4 ${parseFloat(String(partner.pendingAmount||0)) > 0 ? 'border-l-red-400' : 'border-l-gray-200'}`}>
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${parseFloat(String(partner.pendingAmount||0)) > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
-                            <Clock className={`h-5 w-5 ${parseFloat(String(partner.pendingAmount||0)) > 0 ? 'text-red-500' : 'text-gray-400'}`} />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-xs text-gray-500">Pending Amount</p>
-                            <p className={`text-xl font-bold truncate ${parseFloat(String(partner.pendingAmount||0)) > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                                &#8377;{parseFloat(String(partner.pendingAmount || 0)).toLocaleString('en-IN', {minimumFractionDigits:2})}
-                            </p>
                         </div>
                     </div>
                 </Card>
@@ -509,16 +508,16 @@ export default function PartnerDetailsPage() {
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             {earning.paymentStatus === 'PENDING' && (
-                                                <div className="flex items-center gap-2 justify-end">
+                                                <div className="flex flex-col xl:flex-row items-end xl:items-center gap-2 justify-end">
                                                     <Input
-                                                        placeholder="Payment note"
+                                                        placeholder="Note (e.g. UPI)"
                                                         value={paymentNotesMap[earning.id] || ''}
                                                         onChange={(e) => setPaymentNotesMap(prev => ({ ...prev, [earning.id]: e.target.value }))}
-                                                        className="w-36 text-xs h-8"
+                                                        className="w-28 xl:w-32 text-xs h-8"
                                                     />
                                                     <Button
                                                         size="sm"
-                                                        className="h-8 px-3 bg-green-600 hover:bg-green-700 text-white text-xs gap-1"
+                                                        className="h-8 px-2.5 bg-green-600 hover:bg-green-700 text-white text-xs gap-1 flex-shrink-0"
                                                         onClick={() => handleMarkAsPaid(earning.id, earning.year, earning.month)}
                                                         disabled={isProcessingPayment === earning.id}
                                                     >
@@ -527,7 +526,7 @@ export default function PartnerDetailsPage() {
                                                         ) : (
                                                             <CheckCircle className="h-3.5 w-3.5" />
                                                         )}
-                                                        Mark Paid
+                                                        Pay
                                                     </Button>
                                                 </div>
                                             )}
