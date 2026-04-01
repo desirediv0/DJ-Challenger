@@ -603,7 +603,7 @@ export const partners = {
   },
   markPaymentAsPaid: (
     earningId: string,
-    data: { notes: string; year: number; month: number }
+    data: { notes: string; year: number; month: number; partnerId?: string }
   ) => {
     return api.patch(
       `/api/admin/partners/earnings/${earningId}/mark-paid`,

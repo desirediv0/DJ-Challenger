@@ -150,7 +150,7 @@ export default function PartnerDetailsPage() {
                 notes,
                 year,
                 month,
-                partnerId: partner.id
+                partnerId: partner?.id
             });
 
             if (response.data.success) {
@@ -238,7 +238,7 @@ export default function PartnerDetailsPage() {
     const thisMonthNum = now.getMonth() + 1;
     const lastMonthNum = now.getMonth() === 0 ? 12 : now.getMonth();
     const lastMonthYear = now.getMonth() === 0 ? thisYear - 1 : thisYear;
-    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     const thisMonthEntry = partner.monthlyEarnings?.find(m => m.year === thisYear && m.month === thisMonthNum);
     const lastMonthEntry = partner.monthlyEarnings?.find(m => m.year === lastMonthYear && m.month === lastMonthNum);
@@ -281,7 +281,7 @@ export default function PartnerDetailsPage() {
                         </div>
                         <div className="min-w-0">
                             <p className="text-xs text-gray-500 font-medium">Lifetime Earnings</p>
-                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{parseFloat(String(partner.totalEarnings || 0)).toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
+                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{parseFloat(String(partner.totalEarnings || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                         </div>
                     </div>
                 </Card>
@@ -294,7 +294,7 @@ export default function PartnerDetailsPage() {
                         </div>
                         <div className="min-w-0">
                             <p className="text-xs text-gray-500 font-medium">Total Pending Balance</p>
-                            <p className="text-xl font-bold text-red-600 truncate">&#8377;{parseFloat(String(partner.pendingAmount || 0)).toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
+                            <p className="text-xl font-bold text-red-600 truncate">&#8377;{parseFloat(String(partner.pendingAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                         </div>
                     </div>
                 </Card>
@@ -306,8 +306,8 @@ export default function PartnerDetailsPage() {
                             <TrendingUp className="h-5 w-5 text-orange-500" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs text-gray-500 font-medium">This Month ({monthNames[thisMonthNum-1]})</p>
-                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{thisMonthAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
+                            <p className="text-xs text-gray-500 font-medium">This Month ({monthNames[thisMonthNum - 1]})</p>
+                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{thisMonthAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                         </div>
                     </div>
                 </Card>
@@ -323,12 +323,12 @@ export default function PartnerDetailsPage() {
                         </div>
                         <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                                <p className="text-xs text-gray-500">Last M ({monthNames[lastMonthNum-1]})</p>
+                                <p className="text-xs text-gray-500">Last M ({monthNames[lastMonthNum - 1]})</p>
                                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${lastMonthPaid ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                                     {lastMonthPaid ? 'PAID' : 'PENDING'}
                                 </span>
                             </div>
-                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{lastMonthAmount.toLocaleString('en-IN', {minimumFractionDigits:2})}</p>
+                            <p className="text-xl font-bold text-gray-900 truncate">&#8377;{lastMonthAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                         </div>
                     </div>
                 </Card>
@@ -472,9 +472,8 @@ export default function PartnerDetailsPage() {
                                 </tr>
                             ) : (
                                 filteredEarnings.map((earning) => (
-                                    <tr key={earning.id} className={`border-b transition-colors ${
-                                        earning.paymentStatus === 'PAID' ? 'bg-green-50 hover:bg-green-100/60' : 'hover:bg-gray-50'
-                                    }`}>
+                                    <tr key={earning.id} className={`border-b transition-colors ${earning.paymentStatus === 'PAID' ? 'bg-green-50 hover:bg-green-100/60' : 'hover:bg-gray-50'
+                                        }`}>
                                         <td className="px-4 py-3">
                                             <div className="font-semibold text-sm text-gray-900">
                                                 {getMonthName(earning.month)} {earning.year}
@@ -486,7 +485,7 @@ export default function PartnerDetailsPage() {
                                             )}
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <span className="font-bold text-sm text-gray-900">&#8377;{parseFloat(String(earning.totalAmount)).toLocaleString('en-IN', {minimumFractionDigits:2})}</span>
+                                            <span className="font-bold text-sm text-gray-900">&#8377;{parseFloat(String(earning.totalAmount)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                         </td>
                                         <td className="px-4 py-3 text-right text-sm text-gray-700">{earning.totalOrders}</td>
                                         <td className="px-4 py-3 text-center">
@@ -502,7 +501,7 @@ export default function PartnerDetailsPage() {
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">
                                             {earning.paidAt
-                                                ? <span className="text-green-700 font-medium">{new Date(earning.paidAt).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'})}</span>
+                                                ? <span className="text-green-700 font-medium">{new Date(earning.paidAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                                 : <span className="text-gray-300">—</span>
                                             }
                                         </td>
