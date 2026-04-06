@@ -33,18 +33,29 @@ export const NewArrivals = () => {
   const [error, setError] = useState(null);
   const [api, setApi] = useState(null);
 
+  // Auto-scroll carousel every 2.5 seconds
+  useEffect(() => {
+    if (!api) return;
+
+    const scrollInterval = setInterval(() => {
+      api.scrollNext();
+    }, 2500);
+
+    return () => clearInterval(scrollInterval);
+  }, [api]);
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         // Try new product type first
         let response = await fetchApi("/public/products/type/new?limit=12");
-        
+
         if (!response?.data?.products?.length) {
           // Fallback to recent products
           response = await fetchApi("/public/products?sort=createdAt&order=desc&limit=12");
         }
-        
+
         setProducts(response?.data?.products || []);
       } catch (err) {
         console.error("Error fetching new arrivals:", err);
