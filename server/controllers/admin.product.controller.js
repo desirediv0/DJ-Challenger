@@ -4235,3 +4235,103 @@ export const setVariantImageAsPrimary = asyncHandler(async (req, res, next) => {
     );
   }
 });
+
+/** Quick edit SKU / regular price / sale price for one or more variants from the admin list */
+export const quickUpdateProductPricing = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const { updates } = req.body;
+
+  if (!Array.isArray(updates) || updates.length === 0) {
+    throw new ApiError(400, "Provide a non-empty updates array");
+  }
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true },
+  });
+  if (!product) {
+    throw new ApiError(404, "Product not found");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    for (const u of updates) {
+      if (!u?.variantId) {
+        throw new ApiError(400, "Each update must include variantId");
+      }
+
+      const variant = await tx.productVariant.findFirst({
+        where: { id: u.variantId, productId },
+      });
+      if (!variant) {
+        throw new ApiError(
+          404,
+          `Variant ${u.variantId} not found for this product`
+        );
+      }
+
+      const data = {};
+
+      if (u.sku !== undefined) {
+        const sku = String(u.sku ?? "").trim();
+        if (!sku) {
+          throw new ApiError(400, "SKU cannot be empty");
+        }
+        if (sku !== variant.sku) {
+          const clash = await tx.productVariant.findFirst({
+            where: { sku, id: { not: variant.id } },
+          });
+          if (clash) {
+            throw new ApiError(409, `SKU "${sku}" is already in use`);
+          }
+        }
+        data.sku = sku;
+      }
+
+      if (u.price !== undefined && u.price !== null && u.price !== "") {
+        const price = parseFloat(u.price);
+        if (Number.isNaN(price) || price < 0) {
+          throw new ApiError(400, "Invalid price");
+        }
+        data.price = price;
+      }
+
+      if (u.salePrice !== undefined) {
+        if (u.salePrice === null || u.salePrice === "") {
+          data.salePrice = null;
+        } else {
+          const salePrice = parseFloat(u.salePrice);
+          if (Number.isNaN(salePrice) || salePrice < 0) {
+            throw new ApiError(400, "Invalid sale price");
+          }
+          data.salePrice = salePrice;
+        }
+      }
+
+      const nextPrice =
+        data.price !== undefined ? data.price : Number(variant.price);
+      const nextSale =
+        data.salePrice !== undefined
+          ? data.salePrice
+          : variant.salePrice != null
+            ? Number(variant.salePrice)
+            : null;
+      if (nextSale != null && nextSale >= nextPrice) {
+        throw new ApiError(
+          400,
+          "Sale price must be less than regular price for each variant"
+        );
+      }
+
+      if (Object.keys(data).length > 0) {
+        await tx.productVariant.update({
+          where: { id: variant.id },
+          data,
+        });
+      }
+    }
+  });
+
+  res.status(200).json(
+    new ApiResponsive(200, { success: true }, "Pricing updated successfully")
+  );
+});

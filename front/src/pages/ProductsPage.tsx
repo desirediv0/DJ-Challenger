@@ -34,6 +34,7 @@ import {
   X,
   MoreVertical,
   Info,
+  Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -44,6 +45,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { DeleteProductDialog } from "@/components/DeleteProductDialog";
+import { QuickProductPricingDialog } from "@/components/QuickProductPricingDialog";
 import VariantCard from "@/components/VariantCard";
 import { useDebounce } from "@/utils/debounce";
 import JoditEditor from "jodit-react";
@@ -2661,6 +2663,10 @@ function ProductsList() {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [categoriesList, setCategoriesList] = useState<any[]>([]);
+  const [listRefreshKey, setListRefreshKey] = useState(0);
+  const [quickPricingProductId, setQuickPricingProductId] = useState<
+    string | null
+  >(null);
 
   // States for delete dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -2699,7 +2705,7 @@ function ProductsList() {
     };
 
     fetchProducts();
-  }, [currentPage, debouncedSearchQuery, selectedCategory]);
+  }, [currentPage, debouncedSearchQuery, selectedCategory, listRefreshKey]);
 
   // Fetch categories for filter
   useEffect(() => {
@@ -3019,6 +3025,15 @@ function ProductsList() {
         }}
       />
 
+      <QuickProductPricingDialog
+        open={!!quickPricingProductId}
+        onOpenChange={(o) => {
+          if (!o) setQuickPricingProductId(null);
+        }}
+        productId={quickPricingProductId}
+        onSaved={() => setListRefreshKey((k) => k + 1)}
+      />
+
       {/* Premium Page Header */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -3279,6 +3294,13 @@ function ProductsList() {
                           align="end"
                           className="bg-[#FFFFFF] border-[#E5E7EB] shadow-lg"
                         >
+                          <DropdownMenuItem
+                            className="text-[#1F2937] hover:bg-[#F3F7F6]"
+                            onClick={() => setQuickPricingProductId(product.id)}
+                          >
+                            <Tag className="h-4 w-4 mr-2" />
+                            Quick update
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-[#1F2937] hover:bg-[#F3F7F6]"
                             asChild

@@ -16,6 +16,7 @@ import {
   setVariantImageAsPrimary,
   reorderVariantImages,
   bulkVariantOperations,
+  quickUpdateProductPricing,
 } from "../controllers/admin.product.controller.js";
 import {
   verifyAdminJWT,
@@ -54,6 +55,13 @@ router.post(
   hasPermission("products", "create"),
   uploadFiles.array("images"),
   createProduct
+);
+
+router.patch(
+  "/products/:productId/quick-pricing",
+  verifyAdminJWT,
+  hasPermission("products", "update"),
+  quickUpdateProductPricing
 );
 
 router.patch(

@@ -242,6 +242,19 @@ export const products = {
       `/api/admin/products/${productId}${force ? "?force=true" : ""}`
     );
   },
+  quickUpdateProductPricing: (
+    productId: string,
+    updates: Array<{
+      variantId: string;
+      sku: string;
+      price: string | number;
+      salePrice: string | number | null;
+    }>
+  ) => {
+    return api.patch(`/api/admin/products/${productId}/quick-pricing`, {
+      updates,
+    });
+  },
   // Product Images
   uploadImage: (
     productId: string,
