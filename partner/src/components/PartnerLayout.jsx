@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
     Home,
     Ticket,
-    DollarSign,
+    IndianRupee,
     LogOut,
     Menu,
     X,

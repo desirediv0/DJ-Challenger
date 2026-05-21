@@ -3,6 +3,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import axios from "axios";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { API_BASE_URL } from "@/config/api";
 import {
     LineChart,
     Line,
@@ -14,7 +15,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = API_BASE_URL;
 
 type PartnerSummary = {
     partnerId: string;

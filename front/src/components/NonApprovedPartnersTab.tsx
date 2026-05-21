@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, Copy, AlertTriangle } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = API_BASE_URL;
+const DEFAULT_PARTNER_PASSWORD = "PartnerPortal@123";
 
 type PendingPartner = {
     id: string;
@@ -47,7 +49,7 @@ export default function NonApprovedPartnersTab() {
     const [approveId, setApproveId] = useState<string | null>(null);
     const [approveLoading, setApproveLoading] = useState(false);
     const [approveApiError, setApproveApiError] = useState("");
-    const [customPassword, setCustomPassword] = useState("djchallenger");
+    const [customPassword, setCustomPassword] = useState(DEFAULT_PARTNER_PASSWORD);
     const [passwordCopied, setPasswordCopied] = useState(false);
 
     // Success dialog after approval
@@ -81,7 +83,7 @@ export default function NonApprovedPartnersTab() {
     const openApproveDialog = (id: string) => {
         setApproveId(id);
         setApproveApiError("");
-        setCustomPassword("djchallenger");
+        setCustomPassword(DEFAULT_PARTNER_PASSWORD);
         setPasswordCopied(false);
         setApproveDialogOpen(true);
     };
@@ -90,11 +92,11 @@ export default function NonApprovedPartnersTab() {
         setApproveDialogOpen(false);
         setApproveId(null);
         setApproveApiError("");
-        setCustomPassword("djchallenger");
+        setCustomPassword(DEFAULT_PARTNER_PASSWORD);
     };
 
     const handleApprove = async () => {
-        const passwordToSend = customPassword.trim().length >= 6 ? customPassword.trim() : "djchallenger";
+        const passwordToSend = customPassword.trim().length >= 6 ? customPassword.trim() : DEFAULT_PARTNER_PASSWORD;
 
         setApproveLoading(true);
         setApproveApiError("");
@@ -130,8 +132,16 @@ export default function NonApprovedPartnersTab() {
     const handleReject = async (id: string) => {
         if (!window.confirm(t("partners_tab.non_approved.confirm_reject"))) return;
         try {
-            await axios.post(`${API_URL}/api/admin/partners/requests/${id}/reject`);
-            setPartners(prev => prev.map(p => p.id === id ? { ...p, status: "REJECTED" as const } : p));
+            await axios.post(
+                `${API_URL}/api/admin/partners/requests/${id}/reject`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+            setPartners(prev => prev.filter(p => p.id !== id));
         } catch {
             alert(t("partners_tab.non_approved.reject_error"));
         }

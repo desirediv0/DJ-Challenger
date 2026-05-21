@@ -13,16 +13,37 @@ export const registerPartner = asyncHandler(async (req, res) => {
         return res.status(400).json(new ApiResponsive(400, null, 'All fields are required'));
     }
     const emailNorm = String(email).trim().toLowerCase();
-    // Check if already requested
-    const exists = await prisma.partnerRequest.findFirst({
+
+    const existingPartner = await prisma.partner.findFirst({
         where: { email: { equals: emailNorm, mode: 'insensitive' } }
     });
-    if (exists) {
+    if (existingPartner) {
         return res.status(409).json(new ApiResponsive(409, null, 'Request already submitted'));
     }
-    const request = await prisma.partnerRequest.create({
-        data: { name, email: emailNorm, number, city, state, message },
+
+    const activeRequest = await prisma.partnerRequest.findFirst({
+        where: {
+            email: { equals: emailNorm, mode: 'insensitive' },
+            status: { in: ['PENDING', 'APPROVED'] }
+        }
     });
+    if (activeRequest) {
+        return res.status(409).json(new ApiResponsive(409, null, 'Request already submitted'));
+    }
+
+    const request = await prisma.$transaction(async (tx) => {
+        await tx.partnerRequest.deleteMany({
+            where: {
+                email: { equals: emailNorm, mode: 'insensitive' },
+                status: 'REJECTED'
+            }
+        });
+
+        return tx.partnerRequest.create({
+            data: { name, email: emailNorm, number, city, state, message },
+        });
+    });
+
     res.status(201).json(new ApiResponsive(201, { request }, 'Request submitted'));
 });
 

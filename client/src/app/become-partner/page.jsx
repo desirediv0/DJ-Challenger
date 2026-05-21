@@ -51,7 +51,7 @@ const translations = {
 };
 
 const PARTNER_PORTAL_URL =
-  process.env.NEXT_PUBLIC_PARTNER_URL || "http://localhost:5000";
+  process.env.NEXT_PUBLIC_PARTNER_URL || "https://partner.djchallenger.in";
 
 /* ─── tiny animated counter ─── */
 function Counter({ to, suffix = "" }) {

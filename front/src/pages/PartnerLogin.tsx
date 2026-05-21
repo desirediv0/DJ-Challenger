@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { API_BASE_URL } from "@/config/api";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = API_BASE_URL;
 
 export default function PartnerLogin() {
     const [email, setEmail] = useState("");

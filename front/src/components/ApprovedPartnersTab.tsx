@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { formatDate } from "@/lib/utils";
 import { Trash2, UserMinus, Eye } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { API_BASE_URL } from "@/config/api";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = API_BASE_URL;
 
 type LastMonthPayment = {
     status: string;

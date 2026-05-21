@@ -7,6 +7,7 @@ import {
 } from "react";
 import axios from "axios";
 import { Admin } from "@/types/admin";
+import { API_BASE_URL } from "@/config/api";
 
 // Auth context interface
 interface AuthContextType {
@@ -57,9 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
           // Fetch admin profile
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_URL}/api/admin/profile`
-          );
+          const response = await axios.get(`${API_BASE_URL}/api/admin/profile`);
 
           if (response.data.success) {
             const userData = response.data.data.admin;
@@ -99,13 +98,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/admin/login`,
-        {
-          email,
-          password,
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}/api/admin/login`, {
+        email,
+        password,
+      });
 
       if (response.data.success) {
         const { token: authToken, admin: userData } = response.data.data;

@@ -7,11 +7,21 @@ export function cn(...inputs) {
 
 
 // API URL — must match backend (server often runs on 5000). Set NEXT_PUBLIC_API_URL in .env.local
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const isLocalApiUrl =
+  configuredApiUrl?.includes("localhost") ||
+  configuredApiUrl?.includes("127.0.0.1");
+const isLiveBrowser =
+  typeof window !== "undefined" &&
+  !["localhost", "127.0.0.1"].includes(window.location.hostname);
+
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:4000/api"
-    : "https://djchallenger.in/api");
+  isLiveBrowser && (!configuredApiUrl || isLocalApiUrl)
+    ? "https://djchallenger.in/api"
+    : configuredApiUrl ||
+      (process.env.NODE_ENV === "development"
+        ? "http://localhost:4000/api"
+        : "https://djchallenger.in/api");
 
 // Track in-flight requests to prevent duplicates
 const pendingRequests = {};

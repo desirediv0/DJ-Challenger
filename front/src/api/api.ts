@@ -1,11 +1,12 @@
 import axios from "axios";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/config/api";
 
 // Debug API calls - set to true to see all API requests/responses in console
 const DEBUG_API = true;
 
 // Create axios instance with baseURL
-const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === "development" ? "http://localhost:4000" : "https://djchallenger.in");
+const baseURL = API_BASE_URL;
 
 const api = axios.create({
   baseURL: baseURL,

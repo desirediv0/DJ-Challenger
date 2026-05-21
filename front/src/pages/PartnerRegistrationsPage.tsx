@@ -12,9 +12,10 @@ import { formatDate } from "@/lib/utils";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Trash2 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { API_BASE_URL } from "@/config/api";
 
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = API_BASE_URL;
 
 const adminAuthHeaders = () => ({
     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -163,13 +164,13 @@ export default function PartnerRegistrationsPage() {
         setPasswordError("");
         setApproveApiError("");
         try {
-            await axios.post(
+            const response = await axios.post(
                 `${API_URL}/api/admin/partners/requests/${approveId}/approve`,
                 { password },
                 { headers: adminAuthHeaders() }
             );
             setRequests((prev) => prev.map((r) => r.id === approveId ? { ...r, status: "APPROVED" } : r));
-            setApprovedPassword(password);
+            setApprovedPassword(response.data.data?.demoPassword || password.trim());
             setShowPasswordDialog(true);
             closeApproveDialog();
         } catch (err) {
@@ -187,7 +188,7 @@ export default function PartnerRegistrationsPage() {
         if (!window.confirm(t('partner_management.registrations.confirm_reject') || "Are you sure you want to reject this request?")) return;
         try {
             await axios.post(`${API_URL}/api/admin/partners/requests/${id}/reject`, {}, { headers: adminAuthHeaders() });
-            setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "REJECTED" } : r));
+            setRequests((prev) => prev.filter((r) => r.id !== id));
         } catch {
             alert("Failed to reject partner.");
         }

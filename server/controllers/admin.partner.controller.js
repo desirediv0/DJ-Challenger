@@ -38,7 +38,7 @@ export const getNonApprovedPartnerCount = asyncHandler(async (req, res) => {
 // Approve partner request and set password
 export const approvePartnerRequest = asyncHandler(async (req, res) => {
     const { requestId } = req.params;
-    const bodyPassword = req.body?.password;
+    const bodyPassword = req.body?.password ? String(req.body.password).trim() : '';
 
     const request = await prisma.partnerRequest.findUnique({ where: { id: requestId } });
     if (!request || request.status !== 'PENDING') {
@@ -47,8 +47,8 @@ export const approvePartnerRequest = asyncHandler(async (req, res) => {
 
     // Admin UI may send a password (min 6 chars); otherwise use default demo password
     const demoPassword =
-        bodyPassword && String(bodyPassword).length >= 6 && String(bodyPassword).length <= 128
-            ? String(bodyPassword)
+        bodyPassword && bodyPassword.length >= 6 && bodyPassword.length <= 128
+            ? bodyPassword
             : 'PartnerPortal@123';
     const hashed = await bcrypt.hash(demoPassword, 10);
 
@@ -88,11 +88,10 @@ export const rejectPartnerRequest = asyncHandler(async (req, res) => {
     if (!request || request.status !== 'PENDING') {
         return res.status(404).json(new ApiResponsive(404, null, 'Request not found or already processed'));
     }
-    await prisma.partnerRequest.update({
+    await prisma.partnerRequest.delete({
         where: { id: requestId },
-        data: { status: 'REJECTED' },
     });
-    res.status(200).json(new ApiResponsive(200, null, 'Partner request rejected'));
+    res.status(200).json(new ApiResponsive(200, null, 'Partner request rejected and removed'));
 });
 
 // Get full partner details (admin only)

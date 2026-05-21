@@ -9,6 +9,7 @@ import de from "../translations/de.json";
 import zh from "../translations/zh.json";
 import ja from "../translations/ja.json";
 import ar from "../translations/ar.json";
+import { API_BASE_URL } from "@/config/api";
 
 // Define the shape of our translations
 // We can use the 'en' file as the source of truth for types, or simpler generic types
@@ -68,7 +69,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         if (isAuthenticated && token) {
             try {
                 await axios.patch(
-                    `${import.meta.env.VITE_API_URL}/api/admin/profile`,
+                    `${API_BASE_URL}/api/admin/profile`,
                     { language: lang },
                     {
                         headers: { Authorization: `Bearer ${token}` }

@@ -12,7 +12,7 @@ const companyLinks = [
   { name: "Contact", href: "/contact" },
 ];
 
-const PARTNER_PORTAL_URL = process.env.NEXT_PUBLIC_PARTNER_URL || 'https://partner.djchallenger.in/login';
+const PARTNER_PORTAL_URL = process.env.NEXT_PUBLIC_PARTNER_URL || 'https://partner.djchallenger.in';
 
 const socialLinks = [
   {
