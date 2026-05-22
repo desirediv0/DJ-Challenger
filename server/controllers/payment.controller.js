@@ -165,20 +165,21 @@ export const getShippingRates = asyncHandler(async (req, res) => {
 
   const settings = await getShiprocketSettings();
 
-  // If Shiprocket disabled but has credentials, still fetch rates for display
-  // (order creation will use default shipping, but user sees courier options)
   const hasCredentials = !!(settings.email && settings.password);
 
-  if (!settings.isEnabled && !hasCredentials) {
-    console.log("[ShippingRates] Shiprocket disabled and no credentials");
+  // No credentials at all — can't fetch anything
+  if (!hasCredentials) {
+    console.log("[ShippingRates] No Shiprocket credentials configured");
     return res.status(200).json(new ApiResponsive(200, {
       available: false,
       couriers: [],
       shippingCharge: parseFloat(settings.shippingCharge || 0),
       freeShippingThreshold: parseFloat(settings.freeShippingThreshold || 0),
-      message: "Standard shipping rates apply"
+      message: "Shiprocket not configured"
     }, "Shiprocket not configured"));
   }
+  // Note: we fetch rates even if isEnabled=false so user can see options
+  // Order creation still respects isEnabled flag
 
   try {
     const pickupAddress = await getDefaultPickupAddress();
