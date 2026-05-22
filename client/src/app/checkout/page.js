@@ -489,11 +489,12 @@ export default function CheckoutPage() {
                                     // Include shipping and coupon information
                                     shippingAddressId: selectedAddressId,
                                     billingAddressSameAsShipping: true,
-                                    // Also pass coupon information again to ensure it's included
                                     couponCode: coupon?.code || null,
                                     couponId: coupon?.id || null,
                                     discountAmount: totals.discount || 0,
                                     notes: "",
+                                    selectedCourierId: selectedCourier?.courierId || null,
+                                    selectedShippingCharge: selectedCourier?.freightCharge ?? null,
                                 }),
                             });
 

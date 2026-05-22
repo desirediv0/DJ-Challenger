@@ -382,6 +382,8 @@ export const paymentVerification = asyncHandler(async (req, res) => {
     couponId: requestCouponId,
     discountAmount: requestDiscount,
     notes,
+    selectedCourierId,
+    selectedShippingCharge,
   } = req.body;
 
   // Validation
@@ -566,9 +568,11 @@ export const paymentVerification = asyncHandler(async (req, res) => {
       }
     }
 
-    // Calculate shipping cost based on Shiprocket settings
+    // Calculate shipping cost — use selected courier charge if provided, else Shiprocket defaults
     const shiprocketSettings = await prisma.shiprocketSettings.findFirst();
-    if (shiprocketSettings) {
+    if (selectedCourierId && selectedShippingCharge !== undefined) {
+      shippingCost = parseFloat(selectedShippingCharge) || 0;
+    } else if (shiprocketSettings) {
       const threshold = parseFloat(shiprocketSettings.freeShippingThreshold || 0);
       const charge = parseFloat(shiprocketSettings.shippingCharge || 0);
 
@@ -709,6 +713,7 @@ export const paymentVerification = asyncHandler(async (req, res) => {
           paymentMethod: paymentGateway === "PHONEPE" ? "PHONEPE" : "RAZORPAY",
           couponCode,
           couponId: couponId,
+          ...(selectedCourierId ? { selectedCourierId: parseInt(selectedCourierId) } : {}),
         },
       });
 
@@ -856,10 +861,8 @@ export const paymentVerification = asyncHandler(async (req, res) => {
     });
 
     // Process Shiprocket shipping (outside transaction, non-blocking)
-    // This creates the order in Shiprocket and assigns AWB if enabled
-    processOrderForShipping(result.order.id).catch((err) => {
-      console.error("Shiprocket order processing error:", err);
-      // Non-critical - admin can manually sync later
+    processOrderForShipping(result.order.id, selectedCourierId ? parseInt(selectedCourierId) : null).catch((err) => {
+      console.error("Shiprocket order processing error:", err.message);
     });
 
     // Send order confirmation email

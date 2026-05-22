@@ -136,7 +136,9 @@ async function shiprocketRequest(endpoint, method = "GET", body = null) {
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.message || `Shiprocket API error: ${response.status}`);
+        const errMsg = data.message || data.error || JSON.stringify(data);
+        console.error(`[Shiprocket API] ${method} ${endpoint} failed (${response.status}):`, errMsg);
+        throw new Error(errMsg || `Shiprocket API error: ${response.status}`);
     }
 
     return data;
@@ -531,7 +533,7 @@ export async function buildShiprocketOrderPayload(order) {
     const payload = {
         order_id: order.orderNumber,
         order_date: formatDate(order.createdAt),
-        pickup_location: syncedPickupAddress.nickname,
+        pickup_location: syncedPickupAddress.nickname || syncedPickupAddress.name,
         comment: order.notes || "",
 
         // Billing details
@@ -561,7 +563,7 @@ export async function buildShiprocketOrderPayload(order) {
         order_items: orderItems,
 
         // Payment
-        payment_method: order.paymentMethod === "CASH" ? "COD" : "Prepaid",
+        payment_method: (order.paymentMethod === "CASH" || order.paymentMethod === "COD") ? "COD" : "Prepaid",
         // Include shipping cost in sub_total for Shiprocket
         // Shiprocket calculates: sub_total - total_discount = final amount
         // So we need: (subTotal + shipping) - discount = total
@@ -569,10 +571,10 @@ export async function buildShiprocketOrderPayload(order) {
         total_discount: parseFloat(order.discount) || 0,
 
         // Dimensions
-        length: maxLength,
-        breadth: maxBreadth,
-        height: Math.min(totalHeight, 100),
-        weight: totalWeight,
+        length: Math.max(maxLength, settings.defaultLength || 10),
+        breadth: Math.max(maxBreadth, settings.defaultBreadth || 10),
+        height: Math.max(Math.min(totalHeight, 100), settings.defaultHeight || 10),
+        weight: Math.max(totalWeight, settings.defaultWeight || 0.5),
     };
 
     // Add optional fields
@@ -635,7 +637,10 @@ export async function processOrderForShipping(orderId, courierId = null) {
     try {
         // Build and send order to Shiprocket
         const payload = await buildShiprocketOrderPayload(order);
+        console.log(`[Shiprocket] Creating order for ${order.orderNumber}, pickup_location="${payload.pickup_location}", payment_method="${payload.payment_method}", courierId=${courierId}`);
+
         const shiprocketResponse = await createShiprocketOrder(payload);
+        console.log(`[Shiprocket] Order created: order_id=${shiprocketResponse.order_id}, shipment_id=${shiprocketResponse.shipment_id}`);
 
         // Update order with Shiprocket details
         await prisma.order.update({
@@ -650,12 +655,15 @@ export async function processOrderForShipping(orderId, courierId = null) {
         // Try to assign AWB (use selected courier if provided)
         try {
             const awbResponse = await assignAWB(shiprocketResponse.shipment_id, courierId);
+            const awbCode = awbResponse.response?.data?.awb_code || awbResponse.awb_code || null;
+            const courierName = awbResponse.response?.data?.courier_name || awbResponse.courier_name || null;
+            console.log(`[Shiprocket] AWB assigned: awb=${awbCode}, courier=${courierName}`);
 
             await prisma.order.update({
                 where: { id: orderId },
                 data: {
-                    awbCode: awbResponse.response?.data?.awb_code || null,
-                    courierName: awbResponse.response?.data?.courier_name || null,
+                    awbCode,
+                    courierName,
                     shiprocketStatus: "AWB_ASSIGNED",
                 },
             });
@@ -665,22 +673,24 @@ export async function processOrderForShipping(orderId, courierId = null) {
                 await schedulePickup(shiprocketResponse.shipment_id);
                 await prisma.order.update({
                     where: { id: orderId },
-                    data: {
-                        shiprocketStatus: "PICKUP_SCHEDULED",
-                    },
+                    data: { shiprocketStatus: "PICKUP_SCHEDULED" },
                 });
+                console.log(`[Shiprocket] Pickup scheduled for shipment ${shiprocketResponse.shipment_id}`);
             } catch (pickupError) {
-                console.error("Failed to schedule pickup:", pickupError);
-                // Non-critical, continue
+                console.error("[Shiprocket] Failed to schedule pickup:", pickupError.message);
             }
         } catch (awbError) {
-            console.error("Failed to assign AWB:", awbError);
-            // Non-critical, admin can retry later
+            console.error("[Shiprocket] Failed to assign AWB:", awbError.message);
         }
 
         return shiprocketResponse;
     } catch (error) {
-        console.error("Failed to process order for Shiprocket:", error);
+        console.error(`[Shiprocket] FAILED for order ${orderId}:`, error.message);
+        // Store failure status so admin can see it
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { shiprocketStatus: "FAILED" },
+        }).catch(() => {});
         throw error;
     }
 }

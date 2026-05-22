@@ -274,11 +274,26 @@ export const syncOrderToShiprocket = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Order not found");
     }
 
-    if (order.shiprocketOrderId) {
-        throw new ApiError(400, "Order already synced to Shiprocket");
+    const force = req.query.force === "true";
+    if (order.shiprocketOrderId && !force && order.shiprocketStatus !== "FAILED") {
+        throw new ApiError(400, "Order already synced to Shiprocket. Use ?force=true to re-sync.");
     }
 
-    const result = await processOrderForShipping(orderId);
+    // If force re-sync, clear old Shiprocket data so payload builds fresh
+    if (force) {
+        await prisma.order.update({
+            where: { id: orderId },
+            data: {
+                shiprocketOrderId: null,
+                shiprocketShipmentId: null,
+                awbCode: null,
+                courierName: null,
+                shiprocketStatus: null,
+            },
+        });
+    }
+
+    const result = await processOrderForShipping(orderId, order.selectedCourierId || null);
 
     if (!result) {
         throw new ApiError(400, "Shiprocket is disabled or configuration is missing");
