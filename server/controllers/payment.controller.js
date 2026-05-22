@@ -165,19 +165,26 @@ export const getShippingRates = asyncHandler(async (req, res) => {
 
   const settings = await getShiprocketSettings();
 
-  if (!settings.isEnabled) {
+  // If Shiprocket disabled but has credentials, still fetch rates for display
+  // (order creation will use default shipping, but user sees courier options)
+  const hasCredentials = !!(settings.email && settings.password);
+
+  if (!settings.isEnabled && !hasCredentials) {
+    console.log("[ShippingRates] Shiprocket disabled and no credentials");
     return res.status(200).json(new ApiResponsive(200, {
       available: false,
       couriers: [],
       shippingCharge: parseFloat(settings.shippingCharge || 0),
       freeShippingThreshold: parseFloat(settings.freeShippingThreshold || 0),
       message: "Standard shipping rates apply"
-    }, "Shiprocket not enabled, using default shipping"));
+    }, "Shiprocket not configured"));
   }
 
   try {
     const pickupAddress = await getDefaultPickupAddress();
+    console.log(`[ShippingRates] pincode=${pincode}, pickup=${pickupAddress?.pincode}, isEnabled=${settings.isEnabled}`);
     if (!pickupAddress?.pincode) {
+      console.log("[ShippingRates] No pickup address pincode configured");
       return res.status(200).json(new ApiResponsive(200, {
         available: false,
         couriers: [],
@@ -188,6 +195,7 @@ export const getShippingRates = asyncHandler(async (req, res) => {
     }
 
     const cartWeight = parseFloat(weight || settings.defaultWeight || 0.5);
+    console.log(`[ShippingRates] Calling Shiprocket serviceability: pickup=${pickupAddress.pincode} → delivery=${pincode}, weight=${cartWeight}`);
     const result = await checkServiceability({
       pickupPincode: pickupAddress.pincode,
       deliveryPincode: pincode,
@@ -196,9 +204,10 @@ export const getShippingRates = asyncHandler(async (req, res) => {
     });
 
     const available = result?.data?.available_courier_companies || [];
+    console.log(`[ShippingRates] Got ${available.length} couriers from Shiprocket`);
 
     const couriers = available
-      .filter(c => c.is_surface)
+      .filter(c => c.freight_charge > 0) // only valid couriers with a charge
       .sort((a, b) => a.freight_charge - b.freight_charge)
       .map(c => ({
         courierId: c.courier_company_id,
@@ -208,6 +217,7 @@ export const getShippingRates = asyncHandler(async (req, res) => {
         etd: c.etd,
         codAvailable: c.cod === 1,
         isRecommended: c.is_recommended === 1,
+        isSurface: c.is_surface === 1,
         isFastest: false,
       }));
 
@@ -224,13 +234,13 @@ export const getShippingRates = asyncHandler(async (req, res) => {
       message: couriers.length > 0 ? "Shipping options loaded" : "No couriers available for this pincode"
     }, "Shipping rates fetched"));
   } catch (error) {
-    console.error("Shipping rates error:", error.message);
+    console.error("[ShippingRates] Error:", error.message);
     return res.status(200).json(new ApiResponsive(200, {
       available: false,
       couriers: [],
       shippingCharge: parseFloat(settings.shippingCharge || 0),
       freeShippingThreshold: parseFloat(settings.freeShippingThreshold || 0),
-      message: "Could not fetch live rates, using default shipping"
+      message: `Could not fetch live rates: ${error.message}`
     }, "Using default shipping"));
   }
 });
