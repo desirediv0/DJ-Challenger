@@ -175,7 +175,8 @@ export default function CheckoutPage() {
     const fetchShippingRates = useCallback(async (addressId) => {
         if (!addressId || !addresses.length) return;
         const addr = addresses.find(a => a.id === addressId);
-        if (!addr?.pincode) return;
+        const addrPincode = addr?.pincode || addr?.postalCode;
+        if (!addrPincode) return;
 
         setLoadingShipping(true);
         setShippingFetchError("");
@@ -190,7 +191,7 @@ export default function CheckoutPage() {
             }, 0) || 0.5;
 
             const response = await fetchApi(
-                `/payment/shipping-rates?pincode=${addr.pincode}&weight=${totalWeight.toFixed(2)}`,
+                `/payment/shipping-rates?pincode=${addrPincode}&weight=${totalWeight.toFixed(2)}`,
                 { credentials: "include" }
             );
 
