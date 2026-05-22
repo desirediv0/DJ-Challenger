@@ -64,9 +64,6 @@ export default function CheckoutPage() {
     const [shippingFetchError, setShippingFetchError] = useState("");
 
     const totals = getCartTotals();
-    // Adjust total with selected courier's freight charge
-    const shippingCharge = selectedCourier ? selectedCourier.freightCharge : totals.shipping;
-    const adjustedTotal = totals.subtotal - totals.discount + shippingCharge;
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -857,76 +854,6 @@ export default function CheckoutPage() {
                         )}
                     </div>
 
-                    {/* Shipping Options */}
-                    {selectedAddressId && (
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
-                            <h2 className="text-lg font-semibold flex items-center mb-4">
-                                <MapPin className="h-5 w-5 mr-2 text-primary" />
-                                Shipping Method
-                            </h2>
-
-                            {loadingShipping && (
-                                <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Fetching available couriers...
-                                </div>
-                            )}
-
-                            {!loadingShipping && shippingOptions.length > 0 && (
-                                <div className="space-y-2">
-                                    {shippingOptions.map((courier) => (
-                                        <div
-                                            key={courier.courierId}
-                                            onClick={() => setSelectedCourier(courier)}
-                                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                                                selectedCourier?.courierId === courier.courierId
-                                                    ? "border-primary bg-primary/5"
-                                                    : "hover:border-gray-400"
-                                            }`}
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <input
-                                                        type="radio"
-                                                        readOnly
-                                                        checked={selectedCourier?.courierId === courier.courierId}
-                                                        className="h-4 w-4 text-primary mt-0.5"
-                                                    />
-                                                    <div>
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="font-medium text-sm">{courier.courierName}</span>
-                                                            {courier.isRecommended && (
-                                                                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">Recommended</span>
-                                                            )}
-                                                            {courier.isFastest && (
-                                                                <span className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full">Fastest</span>
-                                                            )}
-                                                            {!courier.codAvailable && (
-                                                                <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">No COD</span>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-xs text-gray-500 mt-0.5">
-                                                            Est. delivery: {courier.etd || `${courier.estimatedDays} days`}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <span className="font-semibold text-sm text-primary">
-                                                    {courier.freightCharge === 0 ? "FREE" : `₹${courier.freightCharge}`}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {!loadingShipping && shippingOptions.length === 0 && (
-                                <p className="text-sm text-gray-500 py-2">
-                                    {shippingFetchError || "Standard shipping will be applied at checkout."}
-                                </p>
-                            )}
-                        </div>
-                    )}
-
                     {/* Payment Method */}
                     <div className="bg-white rounded-lg shadow-sm border p-6">
                         <h2 className="text-lg font-semibold flex items-center mb-4">
@@ -1153,9 +1080,9 @@ export default function CheckoutPage() {
                                 )}
 
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Shipping{selectedCourier ? ` (${selectedCourier.courierName})` : ""}</span>
-                                    {shippingCharge > 0 ? (
-                                        <span className="font-medium">{formatCurrency(shippingCharge)}</span>
+                                    <span className="text-gray-600">Shipping</span>
+                                    {totals.shipping > 0 ? (
+                                        <span className="font-medium">{formatCurrency(totals.shipping)}</span>
                                     ) : (
                                         <span className="text-green-600 font-medium">FREE</span>
                                     )}
@@ -1184,7 +1111,7 @@ export default function CheckoutPage() {
                                         <span>Total</span>
                                         <span>
                                             {formatCurrency(
-                                                adjustedTotal + (paymentMethod === "CASH" ? (paymentSettings.codCharge || 0) : 0)
+                                                totals.total + (paymentMethod === "CASH" ? (paymentSettings.codCharge || 0) : 0)
                                             )}
                                         </span>
                                     </div>
