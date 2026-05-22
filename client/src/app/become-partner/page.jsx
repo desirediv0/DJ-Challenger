@@ -106,13 +106,11 @@ export default function BecomePartnerPage() {
         setSuccess(true);
       } else {
         const msg = res.message || "";
-        if (msg.toLowerCase().includes("already") || res.statusCode === 409) setError(t.err_duplicate);
-        else setError(msg || t.err_generic);
+        setError(msg || t.err_generic);
       }
     } catch (err) {
       const msg = err?.message || "";
-      if (msg.toLowerCase().includes("already") || msg.includes("409")) setError(t.err_duplicate);
-      else setError(msg || t.err_generic);
+      setError(msg || t.err_generic);
     } finally { setLoading(false); }
   };
 

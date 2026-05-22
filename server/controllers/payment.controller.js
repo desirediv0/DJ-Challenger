@@ -9,7 +9,7 @@ import { getOrderConfirmationTemplate } from "../email/temp/EmailTemplate.js";
 import { getFileUrl } from "../utils/deleteFromS3.js";
 import { processReferralReward } from "./referral.controller.js";
 import { decrypt } from "../utils/encryption.js";
-import { processOrderForShipping } from "../utils/shiprocket.js";
+import { processOrderForShipping, checkServiceability, getShiprocketSettings, getDefaultPickupAddress } from "../utils/shiprocket.js";
 
 
 async function getPaymentGatewayConfig(userId = null, gateway = "RAZORPAY") {
@@ -153,6 +153,86 @@ export const getPaymentSettings = asyncHandler(async (req, res) => {
       "Payment settings fetched successfully"
     )
   );
+});
+
+// Get live shipping rates for a pincode (authenticated user, checkout page)
+export const getShippingRates = asyncHandler(async (req, res) => {
+  const { pincode, weight } = req.query;
+
+  if (!pincode || !/^\d{6}$/.test(pincode)) {
+    return res.status(400).json(new ApiResponsive(400, null, "Valid 6-digit pincode is required"));
+  }
+
+  const settings = await getShiprocketSettings();
+
+  if (!settings.isEnabled) {
+    return res.status(200).json(new ApiResponsive(200, {
+      available: false,
+      couriers: [],
+      shippingCharge: parseFloat(settings.shippingCharge || 0),
+      freeShippingThreshold: parseFloat(settings.freeShippingThreshold || 0),
+      message: "Standard shipping rates apply"
+    }, "Shiprocket not enabled, using default shipping"));
+  }
+
+  try {
+    const pickupAddress = await getDefaultPickupAddress();
+    if (!pickupAddress?.pincode) {
+      return res.status(200).json(new ApiResponsive(200, {
+        available: false,
+        couriers: [],
+        shippingCharge: parseFloat(settings.shippingCharge || 0),
+        freeShippingThreshold: parseFloat(settings.freeShippingThreshold || 0),
+        message: "Pickup address not configured"
+      }, "Using default shipping"));
+    }
+
+    const cartWeight = parseFloat(weight || settings.defaultWeight || 0.5);
+    const result = await checkServiceability({
+      pickupPincode: pickupAddress.pincode,
+      deliveryPincode: pincode,
+      weight: cartWeight,
+      cod: true,
+    });
+
+    const available = result?.data?.available_courier_companies || [];
+
+    const couriers = available
+      .filter(c => c.is_surface)
+      .sort((a, b) => a.freight_charge - b.freight_charge)
+      .map(c => ({
+        courierId: c.courier_company_id,
+        courierName: c.courier_name,
+        freightCharge: parseFloat(c.freight_charge || 0),
+        estimatedDays: c.estimated_delivery_days,
+        etd: c.etd,
+        codAvailable: c.cod === 1,
+        isRecommended: c.is_recommended === 1,
+        isFastest: false,
+      }));
+
+    // Mark fastest courier
+    if (couriers.length > 0) {
+      const fastest = [...couriers].sort((a, b) => (a.estimatedDays || 99) - (b.estimatedDays || 99))[0];
+      couriers.forEach(c => { c.isFastest = c.courierId === fastest.courierId; });
+    }
+
+    return res.status(200).json(new ApiResponsive(200, {
+      available: couriers.length > 0,
+      couriers,
+      freeShippingThreshold: parseFloat(settings.freeShippingThreshold || 0),
+      message: couriers.length > 0 ? "Shipping options loaded" : "No couriers available for this pincode"
+    }, "Shipping rates fetched"));
+  } catch (error) {
+    console.error("Shipping rates error:", error.message);
+    return res.status(200).json(new ApiResponsive(200, {
+      available: false,
+      couriers: [],
+      shippingCharge: parseFloat(settings.shippingCharge || 0),
+      freeShippingThreshold: parseFloat(settings.freeShippingThreshold || 0),
+      message: "Could not fetch live rates, using default shipping"
+    }, "Using default shipping"));
+  }
 });
 
 // Get Razorpay Key (from DB for the user)
@@ -1506,6 +1586,8 @@ export const createCashOrder = asyncHandler(async (req, res) => {
     couponId: requestCouponId,
     discountAmount: requestDiscount,
     notes,
+    selectedCourierId,
+    selectedShippingCharge,
   } = req.body;
 
   if (!shippingAddressId) {
@@ -1673,9 +1755,11 @@ export const createCashOrder = asyncHandler(async (req, res) => {
       });
     }
 
-    // Calculate shipping cost based on Shiprocket settings
+    // Calculate shipping cost based on selected courier or Shiprocket settings
     const shiprocketSettings = await prisma.shiprocketSettings.findFirst();
-    if (shiprocketSettings) {
+    if (selectedCourierId && selectedShippingCharge !== undefined) {
+      shippingCost = parseFloat(selectedShippingCharge) || 0;
+    } else if (shiprocketSettings) {
       const threshold = parseFloat(shiprocketSettings.freeShippingThreshold || 0);
       const charge = parseFloat(shiprocketSettings.shippingCharge || 0);
 
@@ -1740,6 +1824,7 @@ export const createCashOrder = asyncHandler(async (req, res) => {
           status: "PENDING", // COD orders start as PENDING
           couponCode,
           couponId: couponId,
+          ...(selectedCourierId ? { selectedCourierId: parseInt(selectedCourierId) } : {}),
         },
       });
 
@@ -1831,7 +1916,7 @@ export const createCashOrder = asyncHandler(async (req, res) => {
     });
 
     // Process Shiprocket shipping (outside transaction, non-blocking)
-    processOrderForShipping(result.order.id).catch((err) => {
+    processOrderForShipping(result.order.id, selectedCourierId ? parseInt(selectedCourierId) : null).catch((err) => {
       console.error("Shiprocket order processing error:", err);
     });
 

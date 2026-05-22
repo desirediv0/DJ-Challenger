@@ -605,7 +605,7 @@ export async function buildShiprocketOrderPayload(order) {
 /**
  * Process order for Shiprocket (create order + assign AWB)
  */
-export async function processOrderForShipping(orderId) {
+export async function processOrderForShipping(orderId, courierId = null) {
     // Check if Shiprocket is enabled FIRST before doing anything
     const settings = await getShiprocketSettings();
 
@@ -647,9 +647,9 @@ export async function processOrderForShipping(orderId) {
             },
         });
 
-        // Try to assign AWB
+        // Try to assign AWB (use selected courier if provided)
         try {
-            const awbResponse = await assignAWB(shiprocketResponse.shipment_id);
+            const awbResponse = await assignAWB(shiprocketResponse.shipment_id, courierId);
 
             await prisma.order.update({
                 where: { id: orderId },

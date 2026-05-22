@@ -403,6 +403,7 @@ model Order {
   awbCode                      String?
   courierName                  String?
   shiprocketStatus             String?
+  selectedCourierId            Int?    // Courier selected by user at checkout
   shippingAddress              Address?             @relation(fields: [shippingAddressId], references: [id])
   user                         User                 @relation(fields: [userId], references: [id])
   items                        OrderItem[]

@@ -2,6 +2,7 @@ import express from "express";
 import { verifyJWTToken } from "../middlewares/auth.middleware.js";
 import {
   getPaymentSettings,
+  getShippingRates,
   getRazorpayKey,
   checkout,
   paymentVerification,
@@ -16,6 +17,9 @@ const router = express.Router();
 
 // Public route - Get payment settings
 router.get("/settings", getPaymentSettings);
+
+// Public route - Get shipping rates for a pincode (no auth needed for pincode check, but user must be logged in at checkout)
+router.get("/shipping-rates", getShippingRates);
 
 // PhonePe callback (public route - called by PhonePe)
 router.post("/phonepe-callback", phonePeCallback);

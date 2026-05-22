@@ -35,7 +35,7 @@ const getImageUrl = (image) => {
 export default function CheckoutPage() {
     const { isAuthenticated, user } = useAuth();
     const router = useRouter();
-    const { cart, coupon, getCartTotals, clearCart } = useCart();
+    const { cart, loading: cartLoading, coupon, getCartTotals, clearCart } = useCart();
     const [addresses, setAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState("");
     const [loadingAddresses, setLoadingAddresses] = useState(true);
@@ -57,7 +57,16 @@ export default function CheckoutPage() {
     const [redirectCountdown, setRedirectCountdown] = useState(2); // Reduced from 3 to 2 seconds
     const [confettiCannon, setConfettiCannon] = useState(false);
 
+    // Shipping options state
+    const [shippingOptions, setShippingOptions] = useState([]);
+    const [selectedCourier, setSelectedCourier] = useState(null);
+    const [loadingShipping, setLoadingShipping] = useState(false);
+    const [shippingFetchError, setShippingFetchError] = useState("");
+
     const totals = getCartTotals();
+    // Adjust total with selected courier's freight charge
+    const shippingCharge = selectedCourier ? selectedCourier.freightCharge : totals.shipping;
+    const adjustedTotal = totals.subtotal - totals.discount + shippingCharge;
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -66,12 +75,12 @@ export default function CheckoutPage() {
         }
     }, [isAuthenticated, router]);
 
-    // Redirect if cart is empty (but not if order is already created)
+    // Redirect if cart is empty (but not if order is already created or cart is loading)
     useEffect(() => {
-        if (isAuthenticated && cart.items?.length === 0 && !orderCreated) {
+        if (isAuthenticated && !cartLoading && cart.items?.length === 0 && !orderCreated) {
             router.push("/cart");
         }
-    }, [isAuthenticated, cart, router, orderCreated]);
+    }, [isAuthenticated, cartLoading, cart.items?.length, router, orderCreated]);
 
     // Fetch payment settings
     useEffect(() => {
@@ -162,6 +171,52 @@ export default function CheckoutPage() {
         }
     }, [isAuthenticated]);
 
+    // Fetch shipping rates when address changes
+    const fetchShippingRates = useCallback(async (addressId) => {
+        if (!addressId || !addresses.length) return;
+        const addr = addresses.find(a => a.id === addressId);
+        if (!addr?.pincode) return;
+
+        setLoadingShipping(true);
+        setShippingFetchError("");
+        setShippingOptions([]);
+        setSelectedCourier(null);
+
+        try {
+            // Calculate total weight from cart items (fallback 0.5kg)
+            const totalWeight = cart.items?.reduce((sum, item) => {
+                const w = parseFloat(item?.variant?.weight || item?.product?.weight || 0.5);
+                return sum + w * (item.quantity || 1);
+            }, 0) || 0.5;
+
+            const response = await fetchApi(
+                `/payment/shipping-rates?pincode=${addr.pincode}&weight=${totalWeight.toFixed(2)}`,
+                { credentials: "include" }
+            );
+
+            if (response.success && response.data?.couriers?.length > 0) {
+                setShippingOptions(response.data.couriers);
+                // Auto-select cheapest (first after sort)
+                setSelectedCourier(response.data.couriers[0]);
+            } else {
+                setShippingOptions([]);
+                setShippingFetchError(response.data?.message || "");
+            }
+        } catch (err) {
+            console.error("Shipping rates error:", err);
+            setShippingFetchError("Could not fetch shipping options");
+        } finally {
+            setLoadingShipping(false);
+        }
+    }, [addresses, cart.items]);
+
+    // Re-fetch rates when selected address changes
+    useEffect(() => {
+        if (selectedAddressId && addresses.length > 0) {
+            fetchShippingRates(selectedAddressId);
+        }
+    }, [selectedAddressId, fetchShippingRates]);
+
     // Handle address selection
     const handleAddressSelect = (id) => {
         setSelectedAddressId(id);
@@ -222,11 +277,13 @@ export default function CheckoutPage() {
             setOrderNumber(orderData.orderNumber);
         }
 
+        // Set order created FIRST to prevent cart-empty redirect from triggering
+        setOrderCreated(true);
+
         // Start success animation
         setSuccessAnimation(true);
 
         // Play a single success sound
-        // Don't play both sounds as that might be too much
         playSuccessSound();
 
         // Clear cart after successful order
@@ -241,11 +298,6 @@ export default function CheckoutPage() {
                 ? `Your order #${orderNum} has been confirmed. Redirecting to orders page...`
                 : "Your order has been confirmed. Redirecting to orders page...",
         });
-
-        // Set order created after a brief delay to ensure cart is cleared first
-        setTimeout(() => {
-            setOrderCreated(true);
-        }, 100);
     };
 
     // Process checkout
@@ -285,6 +337,8 @@ export default function CheckoutPage() {
                         couponCode: coupon?.code || null,
                         couponId: coupon?.id || null,
                         discountAmount: totals.discount || 0,
+                        selectedCourierId: selectedCourier?.courierId || null,
+                        selectedShippingCharge: selectedCourier?.freightCharge ?? null,
                     }),
                 });
 
@@ -801,6 +855,76 @@ export default function CheckoutPage() {
                         )}
                     </div>
 
+                    {/* Shipping Options */}
+                    {selectedAddressId && (
+                        <div className="bg-white rounded-lg shadow-sm border p-6">
+                            <h2 className="text-lg font-semibold flex items-center mb-4">
+                                <MapPin className="h-5 w-5 mr-2 text-primary" />
+                                Shipping Method
+                            </h2>
+
+                            {loadingShipping && (
+                                <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Fetching available couriers...
+                                </div>
+                            )}
+
+                            {!loadingShipping && shippingOptions.length > 0 && (
+                                <div className="space-y-2">
+                                    {shippingOptions.map((courier) => (
+                                        <div
+                                            key={courier.courierId}
+                                            onClick={() => setSelectedCourier(courier)}
+                                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                                                selectedCourier?.courierId === courier.courierId
+                                                    ? "border-primary bg-primary/5"
+                                                    : "hover:border-gray-400"
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="radio"
+                                                        readOnly
+                                                        checked={selectedCourier?.courierId === courier.courierId}
+                                                        className="h-4 w-4 text-primary mt-0.5"
+                                                    />
+                                                    <div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="font-medium text-sm">{courier.courierName}</span>
+                                                            {courier.isRecommended && (
+                                                                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">Recommended</span>
+                                                            )}
+                                                            {courier.isFastest && (
+                                                                <span className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full">Fastest</span>
+                                                            )}
+                                                            {!courier.codAvailable && (
+                                                                <span className="text-xs bg-red-50 text-red-500 px-2 py-0.5 rounded-full">No COD</span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-gray-500 mt-0.5">
+                                                            Est. delivery: {courier.etd || `${courier.estimatedDays} days`}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <span className="font-semibold text-sm text-primary">
+                                                    {courier.freightCharge === 0 ? "FREE" : `₹${courier.freightCharge}`}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {!loadingShipping && shippingOptions.length === 0 && (
+                                <p className="text-sm text-gray-500 py-2">
+                                    {shippingFetchError || "Standard shipping will be applied at checkout."}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
                     {/* Payment Method */}
                     <div className="bg-white rounded-lg shadow-sm border p-6">
                         <h2 className="text-lg font-semibold flex items-center mb-4">
@@ -1027,9 +1151,9 @@ export default function CheckoutPage() {
                                 )}
 
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Shipping</span>
-                                    {totals.shipping > 0 ? (
-                                        <span className="font-medium">{formatCurrency(totals.shipping)}</span>
+                                    <span className="text-gray-600">Shipping{selectedCourier ? ` (${selectedCourier.courierName})` : ""}</span>
+                                    {shippingCharge > 0 ? (
+                                        <span className="font-medium">{formatCurrency(shippingCharge)}</span>
                                     ) : (
                                         <span className="text-green-600 font-medium">FREE</span>
                                     )}
@@ -1058,7 +1182,7 @@ export default function CheckoutPage() {
                                         <span>Total</span>
                                         <span>
                                             {formatCurrency(
-                                                totals.total + (paymentMethod === "CASH" ? (paymentSettings.codCharge || 0) : 0)
+                                                adjustedTotal + (paymentMethod === "CASH" ? (paymentSettings.codCharge || 0) : 0)
                                             )}
                                         </span>
                                     </div>

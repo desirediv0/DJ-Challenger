@@ -18,7 +18,7 @@ export const registerPartner = asyncHandler(async (req, res) => {
         where: { email: { equals: emailNorm, mode: 'insensitive' } }
     });
     if (existingPartner) {
-        return res.status(409).json(new ApiResponsive(409, null, 'Request already submitted'));
+        return res.status(409).json(new ApiResponsive(409, null, 'This email is already registered as a partner. Please login.'));
     }
 
     const activeRequest = await prisma.partnerRequest.findFirst({
@@ -28,7 +28,10 @@ export const registerPartner = asyncHandler(async (req, res) => {
         }
     });
     if (activeRequest) {
-        return res.status(409).json(new ApiResponsive(409, null, 'Request already submitted'));
+        return res.status(409).json(new ApiResponsive(409, null, activeRequest.status === 'PENDING'
+            ? 'Your application is already under review. Please wait for approval.'
+            : 'This email is already registered as a partner. Please login.'
+        ));
     }
 
     const request = await prisma.$transaction(async (tx) => {
@@ -65,8 +68,9 @@ export const partnerLogin = asyncHandler(async (req, res) => {
         return res.status(401).json(new ApiResponsive(401, null, 'Invalid credentials'));
     }
     // Generate JWT
-    const token = jwt.sign({ id: partner.id, email: partner.email, role: 'partner' }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.status(200).json(new ApiResponsive(200, { token, partner: { id: partner.id, name: partner.name, email: partner.email } }, 'Login successful'));
+    const token = jwt.sign({ partnerId: partner.id, email: partner.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const { password: _pw, ...partnerData } = partner;
+    res.status(200).json(new ApiResponsive(200, { token, partner: partnerData, requiresPasswordChange: !partner.isPasswordChanged }, 'Login successful'));
 });
 
 // Get partner profile (protected)

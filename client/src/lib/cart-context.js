@@ -25,7 +25,7 @@ export function CartProvider({ children }) {
         itemCount: 0,
         totalQuantity: 0,
     });
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [cartItemsLoading, setCartItemsLoading] = useState({}); // Track loading state for individual items
     const [error, setError] = useState(null);
     const [coupon, setCoupon] = useState(null);

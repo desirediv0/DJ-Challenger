@@ -111,8 +111,11 @@ export const forgotPartnerPassword = asyncHandler(async (req, res) => {
     }
 
     // Find partner
-    const partner = await prisma.partner.findUnique({
-        where: { email, isActive: true }
+    const partner = await prisma.partner.findFirst({
+        where: {
+            email: { equals: String(email).trim().toLowerCase(), mode: 'insensitive' },
+            isActive: true
+        }
     });
 
     if (!partner) {
